@@ -15,7 +15,7 @@ def plot_model(history, model_name, valid_loss):
     description = f"Validation set loss: {valid_loss}"
     plt.text(0.5, -0.1, description, transform=plt.gca().transAxes,
             fontsize=10, color='gray', ha='center', va='center')
-    plt.savefig(f"{model_name}.png")  
+    plt.savefig(f".\\model_results\\{model_name}.png")  
 
 
 
