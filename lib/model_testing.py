@@ -10,7 +10,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 import os
 
-"""os.chdir(".\\model_results")
+"""os.chdir(".\\lib")
 print(os.getcwd())"""
 
 import models, ingest
