@@ -20,7 +20,7 @@ import models, ingest
 USGS_FLAG = True
 
 csv = '..\\henry_csv_17-23.csv'
-renames = {'65': 'Gage Height', '60': 'Discharge', '72254': 'Velocity'}
+renames = {'00065': 'Gage Height', '00060': 'Discharge', '72254': 'Velocity'}
 
 train_scaled, test_scaled, train_dates, test_dates, all_dates = ingest.ingest(csv, renames= renames, USGS_FLAG=USGS_FLAG)
 trainX, trainY = ingest.reshape(train_scaled)
