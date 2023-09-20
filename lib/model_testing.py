@@ -19,8 +19,8 @@ import models, ingest
 # RAS model output or USGS
 USGS_FLAG = True
 
-csv = '..\\henry_csv_17-23.csv'
-renames = {'65': 'Gage Height', '60': 'Discharge', '72254': 'Velocity'}
+csv = r'..\henry_csv_17-23.csv'
+renames = {'00065': 'Gage Height', '00060': 'Discharge', '72254': 'Velocity'}
 
 train_scaled, test_scaled, train_dates, test_dates, all_dates = ingest.ingest(csv, renames= renames, USGS_FLAG=USGS_FLAG)
 trainX, trainY = ingest.reshape(train_scaled)
@@ -29,7 +29,7 @@ testX, testY = ingest.reshape(test_scaled)
 model_names = ['Basic_LSTM', 'Stacked_LSTM', 'Bidirectional_LSTM', 'Attention_LSTM']
 for model_name in model_names:
     model, history = models.prebuilt_models(model_name, trainX, trainY)
-    models.evaluate_model(model, testX, testY)
-    models.plot_model(history, model_name, model)
+    validation_loss = models.evaluate_model(model, testX, testY)
+    models.plot_model(history, model_name, validation_loss)
 
 

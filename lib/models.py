@@ -91,6 +91,7 @@ def prebuilt_models(model_name, trainX, trainY):
 def evaluate_model(model, validX, validY):
     validation_loss = model.evaluate(validX, validY, verbose=1)
     print(f'Validation loss: {validation_loss}')
+    return validation_loss
 
 
 
