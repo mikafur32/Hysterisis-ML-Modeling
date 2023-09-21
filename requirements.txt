@@ -1,0 +1,9 @@
+
+numpy
+pandas
+scikit-learn
+matplotlib
+keras
+tensorflow
+seaborn
+keras-self-attention
