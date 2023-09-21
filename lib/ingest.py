@@ -26,7 +26,7 @@ def train_test_split(df, train_range, test_range):
 
     return df[train_from:train_to], df[test_from:test_to]
 
-def ingest(csv, USGS_FLAG= True, renames={}):
+def ingest(csv, USGS_FLAG= True, renames={}, train_range= ['2017-01-01', '2019-12-31'], test_range= ['2020-01-01', '2020-12-31']):
     
     df, all_dates = read_in(csv, USGS_FLAG, renames)
 
@@ -34,8 +34,7 @@ def ingest(csv, USGS_FLAG= True, renames={}):
     transformed_df = pd.DataFrame(transformed_df, columns= list(renames.values()), index=df.index)
 
     # Split into train and test
-    train_range = ['2017-01-01', '2019-12-31']
-    test_range = ['2020-01-01', '2020-12-31']
+
     train_scaled, test_scaled = train_test_split(transformed_df, train_range, test_range)
 
     # Get train and test timestamps for plotting
@@ -48,10 +47,12 @@ def ingest(csv, USGS_FLAG= True, renames={}):
     return train_scaled, test_scaled, train_dates, test_dates, all_dates
 
 def reshape(scaled):
-    #As required for LSTM networks, we require to reshape an input data into n_samples x timesteps x n_features.
-    #In this example, the n_features is 3. We will make timesteps = 672 (past 7 days data used for training).
+    '''
 
-    #Empty lists to be populated using formatted training data
+    TODO: Set a parameter for the timestep size. Default set to 4 timesteps per hour.
+    
+    '''
+
     X = []
     Y = []
 
@@ -66,7 +67,7 @@ def reshape(scaled):
     for i in range(n_past, len(scaled) - n_future +1):
         X.append(scaled[i - n_past : i, 0:scaled.shape[1]])
         
-        Y.append(scaled[i + n_future - 1:i + n_future, 0]) #0 = Discharge
+        Y.append(scaled[i + n_future - 1:i + n_future, 0]) #0 = Discharge 
 
     X, Y = np.array(X), np.array(Y)
     return X, Y

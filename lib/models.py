@@ -12,7 +12,7 @@ def plot_model(history, model_name, valid_loss):
     plt.plot(history.history['val_loss'], label='Embedded validation loss')
     plt.legend()
 
-    description = f"Validation set loss: {valid_loss}"
+    description = f"Validation set loss: {valid_loss}."
     plt.text(0.5, -0.1, description, transform=plt.gca().transAxes,
             fontsize=10, color='gray', ha='center', va='center')
     plt.savefig(f".\\model_results\\{model_name}.png")  
@@ -75,15 +75,12 @@ def prebuilt_models(model_name, trainX, trainY):
         model.add(Dense(trainY.shape[1]))
         model.compile(optimizer='adam', loss='mse')
 
-
-
     early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
     history = model.fit(trainX, trainY, epochs=10, batch_size=16, validation_split=0.1, verbose=1, callbacks=[early_stopping])
     
-    plot_model(history, model_name)
-    if not "saved_model" in os.listdir(): #If the saved model directory doesn't exist, make it    
-        os.makedirs("saved_model")
-    model.save(f'saved_model/{model_name}_Saved_Henry_2017_2020')    
+    if not "saved_model_multi" in os.listdir(): #If the saved model directory doesn't exist, make it    
+        os.makedirs("saved_model_multi")
+    model.save(f'saved_model_multi/{model_name}_Saved_Henry_2017_2020')    
 
     return model, history
 
