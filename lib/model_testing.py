@@ -10,7 +10,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 import os
 
-os.chdir(".\\lib")
+#os.chdir(".\\lib")
 print(os.getcwd())
 
 import models, ingest
@@ -26,7 +26,7 @@ train_scaled, test_scaled, train_dates, test_dates, all_dates = ingest.ingest(cs
 trainX, trainY = ingest.reshape(train_scaled)
 testX, testY = ingest.reshape(test_scaled)
 
-model_names = ['Basic_LSTM', 'Stacked_LSTM', 'Bidirectional_LSTM', 'Attention_LSTM']
+model_names = ['Attention_LSTM', "GRU",  'Bidirectional_LSTM','Stacked_LSTM','Basic_LSTM' ]
 for model_name in model_names:
     model, history = models.prebuilt_models(model_name, trainX, trainY)
     validation_loss = models.evaluate_model(model, testX, testY)

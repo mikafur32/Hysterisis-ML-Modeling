@@ -3,7 +3,7 @@ from keras.layers import Dense, Dropout, LSTM
 from matplotlib import pyplot as plt
 from keras.callbacks import EarlyStopping
 from keras_self_attention import SeqSelfAttention
-
+from keras.initializers import GlorotNormal
 import os
 
 def plot_model(history, model_name, valid_loss):
@@ -26,31 +26,32 @@ def prebuilt_models(model_name, trainX, trainY):
         model.add(LSTM(units=125, activation="tanh", input_shape=(trainX.shape[1], trainX.shape[2])))
         model.add(Dense(units=1))
         # Compiling the model
-        model.compile(optimizer="RMSprop", loss="mse")
+        model.compile(optimizer="adam", loss="mse")
         model.summary()
 
     elif(model_name == 'Stacked_LSTM'):
         model = Sequential([
-            LSTM(64, activation='relu', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=True),
+            LSTM(64, activation='tanh', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=True),
             Dropout(0.2),
-            LSTM(64, activation='relu', return_sequences=True),
+            LSTM(64, activation='tanh', return_sequences=True),
             Dropout(0.2),
-            LSTM(32, activation='relu'),
+            LSTM(32, activation='tanh'),
             Dropout(0.2),
             Dense(trainY.shape[1])
         ])
-        model.compile(optimizer='adam', loss='mse')
+        model.compile(optimizer='RMSprop', loss='mse')
         model.summary()
 
     
     elif(model_name == 'Attention_LSTM'):
+        initializer = GlorotNormal(seed=42)
         model = Sequential([
-            LSTM(64, activation='relu', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=True),
-            SeqSelfAttention(attention_activation='relu'),
+            LSTM(64, activation='tanh', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=True, kernel_initializer=GlorotNormal()),
+            SeqSelfAttention(attention_activation='tanh', kernel_initializer=GlorotNormal()),
             Dropout(0.2),
             Dense(trainY.shape[1])
         ])
-        model.compile(optimizer='adam', loss='mse')
+        model.compile(optimizer='RMSprop', loss='mse')
         model.summary()
     
 
@@ -58,22 +59,22 @@ def prebuilt_models(model_name, trainX, trainY):
         from keras.layers import Bidirectional
 
         model = Sequential()
-        model.add(Bidirectional(LSTM(64, activation='relu', return_sequences=True), input_shape=(trainX.shape[1], trainX.shape[2])))
-        model.add(LSTM(32, activation='relu', return_sequences=False))
+        model.add(Bidirectional(LSTM(64, activation='tanh', return_sequences=True), input_shape=(trainX.shape[1], trainX.shape[2])))
+        model.add(LSTM(32, activation='tanh', return_sequences=False))
         model.add(Dropout(0.2))
         model.add(Dense(trainY.shape[1]))
 
-        model.compile(optimizer='adam', loss='mse')
+        model.compile(optimizer='RMSprop', loss='mse')
         model.summary()
 
     elif(model_name == 'GRU'):
         from keras.layers import GRU
 
         model = Sequential()
-        model.add(GRU(128, activation='relu', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=False))
+        model.add(GRU(128, activation='tanh', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=False))
         model.add(Dropout(0.2))
         model.add(Dense(trainY.shape[1]))
-        model.compile(optimizer='adam', loss='mse')
+        model.compile(optimizer='RMSprop', loss='mse')
 
     early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
     history = model.fit(trainX, trainY, epochs=10, batch_size=16, validation_split=0.1, verbose=1, callbacks=[early_stopping])
