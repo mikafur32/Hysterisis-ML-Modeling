@@ -11,7 +11,7 @@ import os
 import numpy as np
 
 def predict(model_name, testX, dataname):
-    model = models.get_model(model_name, dataname)
+    model = models_cuda.get_model(model_name, dataname)
     print("predicting")
     return pd.DataFrame(model.predict(testX, verbose= 1))
 

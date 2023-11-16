@@ -23,6 +23,8 @@ from keras import backend as K
 #print(os.getcwd())
 
 #import models_base
+
+
 import models_cuda
 import ingest, predict
 
@@ -61,7 +63,7 @@ date = datetime.now().strftime("%B_%d_%Y_%H_%M")
 
 
 target = "Discharge"
-data_name = f"Henry_RAS_2017_2023_{date}"
+data_name = "Henry_RAS_2017_2023_" + f"{date}"
 
 
 '''
@@ -95,8 +97,8 @@ train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.i
 trainX, trainY = ingest.reshape(train_scaled)#, timestep_type= "hr")
 testX, testY = ingest.reshape(test_scaled)#, timestep_type= "hr")
 
-model_names = ['Basic_LSTM', "GRU", 'Bidirectional_LSTM','Stacked_LSTM']
 
+model_names = ['Basic_LSTM', "GRU", 'Bidirectional_LSTM', 'Stacked_LSTM']
 
 
 for model_name in model_names:
@@ -104,8 +106,6 @@ for model_name in model_names:
     validation_loss = models_cuda.evaluate_model(model, testX, testY)
     models_cuda.plot_model(model_name, validation_loss, data_name)
     K.clear_session()
-
-
 
 '''
 tstart = '2022-03-18 00:00:00'

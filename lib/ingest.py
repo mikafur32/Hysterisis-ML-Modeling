@@ -107,8 +107,3 @@ def reshape(scaled, timestep_type= 'hr'):
     X, Y = np.array(X), np.array(Y)
     return X, Y
 
-
-
-
-
-
