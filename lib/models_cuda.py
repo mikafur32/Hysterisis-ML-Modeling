@@ -72,19 +72,24 @@ def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="
     elif(model_name == 'GRU'):
         model = GRUModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss)
 
+
+    # Save model and history
+    model_directory = f"saved_model_multi/{data}"
+    
+
     # Build and compile the model
     if model is not None:
         model.build_model()
 
     # Train the model
-    history = model.train_model(trainX, trainY, epochs=epochs, batch_size=batch_size)
+    history = model.train_model(trainX, trainY, epochs=epochs, batch_size=batch_size, checkpoint_path= model_directory)
     
-    # Save model and history
-    model_directory = f"saved_model_multi/{data}"
-    os.makedirs(f"{model_directory}/trainHistoryDict", exist_ok=True) #If the saved model directory doesn't exist, make it    
+   
     print("saving model")
-    model.model.save(f'{model_directory}/{model_name}_Saved_{data}')    
+    model.model.save(f'{model_directory}\\{model_name}_Saved_{data}')    
     print("saving history") 
+
+    os.makedirs(f"{model_directory}/trainHistoryDict", exist_ok=True) #If the saved model directory doesn't exist, make it    
     with open(f'{model_directory}/trainHistoryDict/{model_name}.pkl', 'wb+') as file_pi:
         pickle.dump(history.history, file_pi)
 

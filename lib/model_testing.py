@@ -63,7 +63,7 @@ date = datetime.now().strftime("%B_%d_%Y_%H_%M")
 
 
 target = "Discharge"
-data_name = "Henry_RAS_2017_2023_" + f"{date}"
+data_name = "Henry_RAS_2017_2023_" + f"cuda_testing"#"{date}"
 
 
 '''
