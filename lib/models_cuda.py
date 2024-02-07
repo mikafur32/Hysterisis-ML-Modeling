@@ -47,10 +47,10 @@ def plot_model(model_name, valid_loss, data):
 
 
 
-def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="mse", load_models=False, data=None):
+def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="mse", load_models=False, data_name=None):
     if(load_models):
         print("retrieving and loading model")
-        return load_model(f'saved_model_multi/{data}/{model_name}_Saved_{data}')
+        return load_model(f'saved_model_multi/{data_name}/{model_name}_Saved_{data_name}')
 
     # Depending on the loss, we might need to pass a custom loss function
     if loss == "nse":
@@ -61,20 +61,20 @@ def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="
 
     # Instantiate the appropriate model class
     if(model_name == 'Basic_LSTM'):
-        model = BasicLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss)
+        model = BasicLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "BasicLSTM")
         
     elif(model_name == 'Stacked_LSTM'):
-        model = StackedLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss)
+        model = StackedLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "StackedLSTM")
     
     elif(model_name == 'Bidirectional_LSTM'):
-        model = BidirectionalLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss)
+        model = BidirectionalLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "BiDirectionalLSTM")
     
     elif(model_name == 'GRU'):
-        model = GRUModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss)
+        model = GRUModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "GRU")
 
 
     # Save model and history
-    model_directory = f"saved_model_multi/{data}"
+    model_directory = f"saved_model_multi/{data_name}"
     
 
     # Build and compile the model
@@ -86,7 +86,7 @@ def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="
     
    
     print("saving model")
-    model.model.save(f'{model_directory}\\{model_name}_Saved_{data}')    
+    model.model.save(f'{model_directory}\\{model_name}_Saved_{data_name}')    
     print("saving history") 
 
     os.makedirs(f"{model_directory}/trainHistoryDict", exist_ok=True) #If the saved model directory doesn't exist, make it    

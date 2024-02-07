@@ -41,11 +41,13 @@ def plot_predicts(model_name, predicts, testY, test_dates, datamname, event_rang
         raise ValueError(f"Event, {event_range}, not in test set daterange. Please choose another range.")
         
     if event_range != None:
-        event_range = pd.to_datetime(event_range)
+        # Current format does not require pd.to_datetime, may change with different inputs.
+        #event_range = pd.to_datetime(event_range)
         t_start = str(event_range[0])
         t_end = str(event_range[1])
 
         eventY = testY.loc[t_start : t_end]
+        print(t_start, t_end)
         eventPredicts = predicts.loc[t_start : t_end]
 
         plt.figure()

@@ -26,7 +26,7 @@ from keras import backend as K
 
 
 import models_cuda
-import ingest, predict
+import ingest, predict, evaluate
 
 
 """
@@ -51,20 +51,45 @@ mixed_precision.set_global_policy(
     policy
 )
 
-## FLAGS ##
-# RAS model output or USGS
-USGS_FLAG = True
+
 
 ### HENRY RAS ###
-csv = r"..\data\Henry_WSS_2017_2023.csv"
-columns = {'Q': 'Discharge', 'WSS': 'Slope'}
-
-date = datetime.now().strftime("%B_%d_%Y_%H_%M")
+csv = r"..\data\Henry_4vars_2017_2023.csv"
 
 
-target = "Discharge"
-data_name = "Henry_RAS_2017_2023_" + f"cuda_testing"#"{date}"
 
+
+train_range = ["1/1/2017 0:00","12/31/2021 23:45"]
+test_range = ["1/1/2022 0:00", "12/31/2022 23:45"]
+'''
+tstart = '2022-03-18 00:00:00'
+tend = '2022-04-07 00:00:00'
+'''
+
+tstart = "3/18/2022 0:00"
+tend = "4/7/2022 23:45"
+
+WSS_V = {"target": "V", "features": { "WSS": "WSS"}, "Name": "WSS_V"}
+
+WSSV_Q = {"target": "Q", "features": { "WSS": "WSS", "V": "V"}, "Name": "WSSV_Q"}
+
+WSSVQ_WL = {"target": "WL", "features": { "WSS": "WSS", "V": "V", "Q": "Q"}, "Name": "WSSVQ_WL"}
+
+
+
+tests= [WSS_V, WSSV_Q, WSSVQ_WL]
+
+
+for test in tests:
+    data_name = "Henry_RAS_2017_2023_" + f"{test['Name']}"
+
+    
+    evaluate.evaluate(csv, test["features"], test["target"],
+                       data_name, train_range, test_range,
+                       tstart, tend)
+
+# Tensor board
+# tensorboard --logdir=C:\Users\Mikey\Documents\Github\Hysterisis-ML-Modeling\lib\logs
 
 '''
 ### HENRY ###
@@ -75,8 +100,8 @@ columns = {'65': 'Gage Height', '60': 'Discharge', '72254': 'Velocity'}
 target = "Discharge"
 data_name = "Henry_2017_2020"
 '''
-'''
 
+'''
 csv = "..\\data\\USGS_WS_2017_2023.csv"
 columns = {
            "Peoria_WL": "Peoria_WL",
@@ -89,34 +114,3 @@ columns = {
 target = "Flow"
 data_name = "USGS_WS_2017_2023"
 '''
-
-train_range = ["1/1/2017 0:00","12/31/2021 23:45"]
-test_range = ["1/1/2022 0:00", "12/31/2022 23:45"]
-
-train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, USGS_FLAG=USGS_FLAG, train_range= train_range, test_range= test_range)#train_test_ratio= 0.8)
-trainX, trainY = ingest.reshape(train_scaled)#, timestep_type= "hr")
-testX, testY = ingest.reshape(test_scaled)#, timestep_type= "hr")
-
-
-model_names = ['Basic_LSTM', "GRU", 'Bidirectional_LSTM', 'Stacked_LSTM']
-
-
-for model_name in model_names:
-    model = models_cuda.prebuilt_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "nse", load_models=False, data= data_name)
-    validation_loss = models_cuda.evaluate_model(model, testX, testY)
-    models_cuda.plot_model(model_name, validation_loss, data_name)
-    K.clear_session()
-
-'''
-tstart = '2022-03-18 00:00:00'
-tend = '2022-04-07 00:00:00'
-'''
-
-tstart = "3/18/2022 0:00"
-tend = "4/7/2022 23:45"
-event_range = [tstart, tend]
-
-for model_name in model_names:
-    predicts = predict.predict(model_name, testX, data_name)
-    predict.plot_predicts(model_name, predicts, testY, test_dates, data_name, event_range= event_range, event_plotstep= "Day")
-
