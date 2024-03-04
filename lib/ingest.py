@@ -41,7 +41,7 @@ def train_test_split(df, train_range, test_range):
 
     return df[train_from:train_to], df[test_from:test_to]
 
-def ingest(csv, target, renames={}, train_range= None, test_range= None, train_test_ratio= None):
+def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, test_range= None, train_test_ratio= None):
     
     df, all_dates = read_in(csv, target, renames)
 
@@ -74,7 +74,7 @@ def ingest(csv, target, renames={}, train_range= None, test_range= None, train_t
 
     return train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler
 
-def reshape(scaled, timestep_type= 'hr'):
+def reshape(scaled, n_past, n_future, timestep_type= 'hr'):
     '''
 
     TODO: Set a parameter for the timestep size. Default set to 4 timesteps per hour.
@@ -84,28 +84,21 @@ def reshape(scaled, timestep_type= 'hr'):
     X = []
     Y = []
 
+  
     '''
-    Lag shifting test:
-        - vary n_future
-        - 0 and 100 should change ths distance of orange line start
-            - if so, we know that the n_future is working properly as the lag parameter
-            - and, larger lag should imply poorer result .:. skipping data
-            
+    #if(timestep_type == 'hr'):
+    time_to_hr = 4 # 4 timesteps per hour
+    time_to_day = time_to_hr * 24 # 24hrs in a day
+
+    n_future = 12 # Number of timesteps we want to look into the future based on the past timesteps. 4 * 3hrs = 12
+    n_past = 3 * time_to_day # Number of past timesteps we want to use to predict the future. 
+    
+    """  
+        elif(timestep_type == 'day'):
+            n_future = 1 # Number of timesteps we want to look into the future based on the past timesteps. 
+            n_past =  7 # Number of past timesteps we want to use to predict the future. 
+    """
     '''
-
-    if(timestep_type == 'hr'):
-        time_to_hr = 4 # 4 timesteps per hour
-        time_to_day = time_to_hr * 24 # 24hrs in a day
-
-        n_future = 12 # Number of timesteps we want to look into the future based on the past timesteps. 4 * 3hrs = 12
-        n_past = 3 * time_to_day # Number of past timesteps we want to use to predict the future. 
-    
-    
-    elif(timestep_type == 'day'):
-        n_future = 1 # Number of timesteps we want to look into the future based on the past timesteps. 
-        n_past =  7 # Number of past timesteps we want to use to predict the future. 
-
-
     #Reformat input data into a shape: (n_samples x timesteps x n_features)
 
     for i in range(n_past, len(scaled) - n_future + 1):
