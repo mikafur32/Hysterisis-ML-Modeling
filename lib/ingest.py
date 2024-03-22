@@ -20,7 +20,7 @@ def read_in(csv, target, renames={}):
 
     # Reorder so that target is first.
     df = df[[target] + [x for x in renames.values() if x != target]]
-
+    print(df.head())
     all_dates = df.index.to_series()
     return df, all_dates
 
@@ -29,15 +29,8 @@ def train_test_split(df, train_range, test_range):
     train_from = train_range[0]
     train_to = train_range[1]
 
-   
-    #print("TEST RANGE",test_range)
-
     test_from = test_range[0]
     test_to = test_range[1]
-    
-    #print("TEST RANGE 0", test_range[0])
-    #print(test_range[1])
-
 
     return df[train_from:train_to], df[test_from:test_to]
 
@@ -47,7 +40,11 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
 
 
     # If no range is assigned, will use the full range for training & testing
-    if(train_range == None or test_range == None):
+    if(train_range == None and not test_range == None):
+        train_range, test_range = [all_dates[0], test_range[0]], test_range
+    elif(test_range == None and not train_range == None):
+        train_range, test_range = train_range, [all_dates[0], all_dates[-1]]
+    elif(train_range == None and test_range == None):
         train_range, test_range = [all_dates[0], all_dates[-1]], [all_dates[0], all_dates[-1]]
     elif(train_test_ratio):
         train_range  = [all_dates[0], all_dates.iloc[int(np.floor(len(all_dates) * train_test_ratio))]]
@@ -56,12 +53,12 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
 
     scaler = StandardScaler()
     transformed_df = scaler.fit_transform(df)
-    
+    print(transformed_df)
     # Validate validity of not having all cols in renames. 
     # transformed_df = pd.DataFrame(transformed_df, columns= list(renames.values()), index=df.index)
 
     transformed_df = pd.DataFrame(transformed_df, columns= df.columns, index=df.index)
-
+    print(transformed_df.head())
     # Split into train and test
     train_scaled, test_scaled = train_test_split(transformed_df, train_range, test_range)
 
@@ -74,39 +71,18 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
 
     return train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler
 
-def reshape(scaled, n_past, n_future, timestep_type= 'hr'):
-    '''
-
-    TODO: Set a parameter for the timestep size. Default set to 4 timesteps per hour.
-    
-    '''
-
+def reshape(scaled, n_past= 96, n_future = 48, timestep_type= 'hr'):
     X = []
     Y = []
 
-  
-    '''
-    #if(timestep_type == 'hr'):
-    time_to_hr = 4 # 4 timesteps per hour
-    time_to_day = time_to_hr * 24 # 24hrs in a day
-
-    n_future = 12 # Number of timesteps we want to look into the future based on the past timesteps. 4 * 3hrs = 12
-    n_past = 3 * time_to_day # Number of past timesteps we want to use to predict the future. 
-    
-    """  
-        elif(timestep_type == 'day'):
-            n_future = 1 # Number of timesteps we want to look into the future based on the past timesteps. 
-            n_past =  7 # Number of past timesteps we want to use to predict the future. 
-    """
-    '''
     #Reformat input data into a shape: (n_samples x timesteps x n_features)
 
     for i in range(n_past, len(scaled) - n_future + 1):
         X.append(scaled[i - n_past : i, 0:scaled.shape[1]])
         
-        ## NOTE: This assumes the target values are the 1st column.
+        ## NOTE: This assumes the target values are the 1st column, which is the case after the lambda func in read_in().
 
-        Y.append(scaled[i + n_future - 1 : i + n_future, 0]) #0 = Discharge 
+        Y.append(scaled[i + n_future - 1 : i + n_future, 0]) 
 
     X, Y = np.array(X), np.array(Y)
     return X, Y
