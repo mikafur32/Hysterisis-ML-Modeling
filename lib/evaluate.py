@@ -51,16 +51,13 @@ mixed_precision.set_global_policy(
     policy
 )
 
-def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10, train_test_ratio= .8, train_range= None, test_range= None, n_past= 96, n_future= 12, train_flag= True, predict_flag= True, plotstep= "Month"):
+def evaluate(csv, columns, target, data_name, train_range, test_range, event_start, event_end, n_past= 96, n_future= 12, train_flag= True, predict_flag= True):
 
     date = datetime.now().strftime("%B_%d_%Y_%H_%M")
 
-    if train_range == None or test_range == None:
-        train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, train_test_ratio= 0.8)
 
-    else:
-        train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, train_range= train_range, test_range= test_range)#train_test_ratio= 0.8)
-    
+
+    train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, train_range= train_range, test_range= test_range)#train_test_ratio= 0.8)
     trainX, trainY = ingest.reshape(train_scaled, n_past, n_future)#, timestep_type= "hr")
     testX, testY = ingest.reshape(test_scaled,  n_past, n_future)#, timestep_type= "hr")
 
@@ -71,7 +68,7 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
         for model_name in model_names:
             print(f'evaluating {model_name}')
 
-            model = models_cuda.prebuilt_models(model_name, trainX, trainY, epochs= 1, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
+            model = models_cuda.prebuilt_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
             validation_loss = models_cuda.evaluate_model(model, testX, testY)
             
             ### JUST TRAIN FOR NOW ###
@@ -79,15 +76,15 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
             K.clear_session()
 
     if predict_flag:
-        _predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep)
+        _predict(event_start, event_end, model_names, testX, testY, test_dates, data_name)
 
 
 
-def _predict(tstart, tend, model_names, testX, testY, test_dates, data_name, plotstep= "Month"):
+def _predict(tstart, tend, model_names, testX, testY, test_dates, data_name):
 
     event_range = [tstart, tend]
     print(event_range, model_names)
     for model_name in model_names:
         print(f"predicting {model_name} over {event_range}")
         predicts = predict.predict(model_name, testX, data_name)
-        predict.plot_predicts(model_name, predicts, testY, test_dates, data_name, event_range= event_range, event_plotstep= plotstep)
+        predict.plot_predicts(model_name, predicts, testY, test_dates, data_name, event_range= event_range, event_plotstep= "Day")
