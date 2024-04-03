@@ -15,7 +15,7 @@ def predict(model_name, testX, dataname):
     print("predicting")
     return pd.DataFrame(model.predict(testX, verbose= 1))
 
-def plot_predicts(model_name, predicts, testY, test_dates, datamname, event_range= None, event_plotstep= "Month"):
+def plot_predicts(model_name, predicts, testY, test_dates, dataname, event_range= None, event_plotstep= "Month"):
     
     '''
     TODO:
@@ -26,16 +26,24 @@ def plot_predicts(model_name, predicts, testY, test_dates, datamname, event_rang
     # Get the smallest shape
     shape = test_dates.shape[0] if predicts.shape[0] > test_dates.shape[0] else predicts.shape[0]
 
-    # Add dates to the sets
     testY = pd.DataFrame(testY, index= pd.to_datetime(test_dates[:shape]))
 
     # Ensure uniform types
     predicts = predicts.astype(np.float64)
     predicts = pd.DataFrame(predicts)
 
+    # Export predicts
+    if(not os.path.exists(f"model_results/{dataname}/{model_name}/predict_results")):
+        os.makedirs(f"model_results/{dataname}/{model_name}/predict_results", exist_ok= True) 
+    predicts.to_csv(f"model_results/{dataname}/{model_name}/predict_results/{model_name}_predicts.csv")
+
     # Set datetime indicies
     predicts["datetime"] = test_dates[:shape].index
     predicts = predicts.set_index("datetime")
+
+    #Evaluate the metrics
+    metrics_df = evaluate_metrics(predicts, y, dataname, model_name)
+
 
     if not ((event_range[0] in test_dates) or (event_range[1] in test_dates)):
         raise ValueError(f"Event, {event_range}, not in test set daterange. Please choose another range.")
@@ -68,7 +76,7 @@ def plot_predicts(model_name, predicts, testY, test_dates, datamname, event_rang
         plt.setp(ax.get_xticklabels(), rotation=45, ha="right")  # Rotate the x-axis labels for better visibility
 
         plt.legend()
-        plt.savefig(fr"model_results/{datamname}/{model_name}/{model_name}_event_predictions.png")  
+        plt.savefig(fr"model_results/{dataname}/{model_name}/{model_name}_event_predictions.png")  
         plt.close()
 
 
@@ -76,6 +84,14 @@ def plot_predicts(model_name, predicts, testY, test_dates, datamname, event_rang
     plt.title(f"{model_name} Predictions")
     plt.plot(pd.to_datetime(testY.index), testY.iloc[:, 0], label='Observed')
     plt.plot(pd.to_datetime(testY.index), predicts.iloc[:, 0], label='Simulated')
+
+    # Adding metrics to the plot
+    x_pos = 0.05 * len(metrics_df['true'])
+    y_pos = plt.ylim()[1] * 0.95
+    for index, row in metrics_df.iterrows():
+        plt.text(x_pos, y_pos, f"{row['Metric']}: {row['Value']:.2f}", fontsize=9)
+        y_pos -= (plt.ylim()[1] - plt.ylim()[0]) * 0.05  
+
 
 
     # Format the x-axis
@@ -86,8 +102,43 @@ def plot_predicts(model_name, predicts, testY, test_dates, datamname, event_rang
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right")  # Rotate the x-axis labels for better visibility
 
     plt.legend()
-    plt.savefig(fr"model_results/{datamname}/{model_name}/{model_name}_predictions.png")  
+    plt.savefig(fr"model_results/{dataname}/{model_name}/{model_name}_predictions.png")  
     plt.close()
 
 
 
+def evaluate_metrics(predicts, y, dataname, model_name):
+    import pandas as pd
+    import numpy as np
+    from scipy.signal import find_peaks
+    from permetrics.regression import KGE
+
+    
+    mse = np.mean((predicts - y) ** 2)
+    rmse = np.sqrt(mse)
+
+    bias = np.mean(predicts - y)
+
+    # Mean Peak Error & Peak Timing Error
+    true_peaks, _ = find_peaks(y)
+    predicted_peaks, _ = find_peaks(predicts)
+
+    if len(true_peaks) > 0 and len(predicted_peaks) > 0:
+        mean_peak_error = np.mean(np.abs(y[true_peaks] - predicts[predicted_peaks]))
+        # Approximation of peak timing error by comparing the first peak
+        peak_timing_error = np.abs(true_peaks[0] - predicted_peaks[0])
+    else:
+        mean_peak_error = None
+        peak_timing_error = None
+
+    kge = KGE(simulated=predicts, observed=y)
+
+
+    # Create a DataFrame from the results
+    results_df = pd.DataFrame({
+        'Metric': ['MSE', 'RMSE', 'Bias', 'Mean Peak Error', 'Peak Timing Error', 'KGE'],
+        'Value': [mse, rmse, bias, mean_peak_error, peak_timing_error, kge]
+    })
+
+    results_df.to_csv(f"model_results/{dataname}/{model_name}/{model_name}_metrics.csv")
+    return results_df

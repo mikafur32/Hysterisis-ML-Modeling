@@ -8,7 +8,7 @@ mixed_precision.set_global_policy(
     policy
 )
 
-# HI :)
+
 
 
 """
@@ -28,8 +28,8 @@ HELP
 -h
 
 NO TRAINING
-python model_CLI.py -data "C:\\Users\\Mikey\\Documents\\Github\\Hysterisis-ML-Modeling\\data\\Henry_4vars_2017_2023.csv" -model "Basic_LSTM" -train n  -test_range "['1/1/2022 0:00','12/31/2022 23:45']" -n_past 96 -n_future 12 -epochs 1  -event_range
- "['3/18/2022 0:00','4/7/2022 23:45']" -vp y -dn testing3 -debug
+python model_CLI.py -data "C:\\Users\\Mikey\\Documents\\Github\\Hysterisis-ML-Modeling\\data\\Henry_4vars_2017_2023.csv" -model all -train n  -test_range "['1/1/2022 0:00','12/31/2022 23:45']" -n_past 96 -n_future 12 -epochs 1  -event_range
+ "['3/18/2022 0:00','4/7/2022 23:45']" -vp y -dn testing2 -debug
 
 =============================================================================
 """
@@ -256,13 +256,13 @@ WSS_Q = {"target": "Q", "features": {"WSS": "WSS"}, "Name": "WSS_Q"}
 
 
 # Define tests
-tests= [WSS_V, WSSV_Q, WSSVQ_WL]
+tests= [WSSVQ_WL]#WSS_V, WSSV_Q, ]
 tests2= [_WSS_V, V_Q, Q_WL]
 tests3 =[WSS_WL, WSS_Q]
 
 
 if train_flag:
-    for test in tests2:
+    for test in tests:
             
         data_name = dataname + f"{test['Name']}"
         print(f"\n=============Running {data_name} =============\n")
@@ -292,7 +292,7 @@ if train_flag:
 else:
     event_start, event_end = event_range[0], event_range[1]
 
-    for test in tests2:
+    for test in tests:
         data_name = dataname + f"{test['Name']}"
 
         train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(data, test["target"], train_range= train_range, test_range= test_range)
