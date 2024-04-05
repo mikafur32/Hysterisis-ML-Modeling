@@ -285,7 +285,8 @@ if train_flag:
         else:
             evaluate.evaluate(data, test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
-                            event_start=event_start, event_end=event_end, train_flag= train_range, #epochs=epochs,
+                            event_start=event_start, event_end=event_end, 
+                            train_flag= train_range, #epochs=epochs,
                             predict_flag= test_range, plotstep=plotstep)
         
 

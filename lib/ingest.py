@@ -54,6 +54,7 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
         test_range   = [all_dates.iloc[int(np.ceil(len(all_dates) * train_test_ratio))], all_dates[-1]]
 
 
+
     scaler = StandardScaler()
     transformed_df = scaler.fit_transform(df)
     
@@ -64,6 +65,7 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
 
     # Split into train and test
     train_scaled, test_scaled = train_test_split(transformed_df, train_range, test_range)
+
 
     # Get train and test timestamps for plotting
     train_dates = train_scaled.index.to_series()
@@ -102,7 +104,7 @@ def reshape(scaled, n_past, n_future, timestep_type= 'hr'):
     #Reformat input data into a shape: (n_samples x timesteps x n_features)
 
     for i in range(n_past, len(scaled) - n_future + 1):
-        X.append(scaled[i - n_past : i, 0:scaled.shape[1]])
+        X.append(scaled[i - n_past : i, 1:scaled.shape[1]]) # 1:scaled.shape[1] = all columns except for the target column.
         
         ## NOTE: This assumes the target values are the 1st column.
 

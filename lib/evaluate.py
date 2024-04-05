@@ -64,7 +64,6 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
     trainX, trainY = ingest.reshape(train_scaled, n_past, n_future)#, timestep_type= "hr")
     testX, testY = ingest.reshape(test_scaled,  n_past, n_future)#, timestep_type= "hr")
 
-
     model_names = ['Basic_LSTM', "GRU", 'Stacked_LSTM']#'Bidirectional_LSTM',]
 
     if train_flag:
@@ -79,15 +78,15 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
             K.clear_session()
 
     if predict_flag:
-        _predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep)
+        _predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
 
 
 
-def _predict(tstart, tend, model_names, testX, testY, test_dates, data_name, plotstep= "Month"):
+def _predict(tstart, tend, model_names, testX, testY, test_dates, data_name, scaler, plotstep= "Month"):
 
     event_range = [tstart, tend]
     print(event_range, model_names)
     for model_name in model_names:
         print(f"predicting {model_name} over {event_range}")
         predicts = predict.predict(model_name, testX, data_name)
-        predict.plot_predicts(model_name, predicts, testY, test_dates, data_name, event_range= event_range, event_plotstep= plotstep)
+        predict.plot_predicts(model_name, predicts, testY, test_dates, data_name, scaler=scaler ,event_range= event_range, event_plotstep= plotstep)

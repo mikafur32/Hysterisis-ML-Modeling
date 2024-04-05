@@ -15,18 +15,19 @@ def predict(model_name, testX, dataname):
     print("predicting")
     return pd.DataFrame(model.predict(testX, verbose= 1))
 
-def plot_predicts(model_name, predicts, testY, test_dates, dataname, event_range= None, event_plotstep= "Month"):
+def plot_predicts(model_name, predicts, testY, test_dates, dataname, scaler, event_range= None, event_plotstep= "Month"):
     
-    '''
-    TODO:
-    1. Inverse Transform
-    2. Y-axis labels
+    predicts = pd.concat([pd.Series(predicts[0]),pd.Series(predicts[0]),pd.Series(predicts[0]),pd.Series(predicts[0])], axis=1)
+    testY =  pd.concat([pd.Series(testY[0]),pd.Series(testY[0]),pd.Series(testY[0]),pd.Series(testY[0])], axis=1)
+
+
+    predicts = scaler.inverse_transform(predicts)
+    testY = scaler.inverse_transform(testY)
     
-    '''
     # Get the smallest shape
     shape = test_dates.shape[0] if predicts.shape[0] > test_dates.shape[0] else predicts.shape[0]
 
-    testY = pd.DataFrame(testY, index= pd.to_datetime(test_dates[:shape]))
+    testY = pd.DataFrame(testY[1], index= pd.to_datetime(test_dates[:shape]))
 
     # Ensure uniform types
     predicts = predicts.astype(np.float64)
@@ -42,7 +43,7 @@ def plot_predicts(model_name, predicts, testY, test_dates, dataname, event_range
     predicts = predicts.set_index("datetime")
 
     #Evaluate the metrics
-    metrics_df = evaluate_metrics(predicts, y, dataname, model_name)
+    metrics_df = evaluate_metrics(predicts, testY, dataname, model_name)
 
 
     if not ((event_range[0] in test_dates) or (event_range[1] in test_dates)):
@@ -85,13 +86,14 @@ def plot_predicts(model_name, predicts, testY, test_dates, dataname, event_range
     plt.plot(pd.to_datetime(testY.index), testY.iloc[:, 0], label='Observed')
     plt.plot(pd.to_datetime(testY.index), predicts.iloc[:, 0], label='Simulated')
 
+    '''
     # Adding metrics to the plot
     x_pos = 0.05 * len(metrics_df['true'])
     y_pos = plt.ylim()[1] * 0.95
     for index, row in metrics_df.iterrows():
         plt.text(x_pos, y_pos, f"{row['Metric']}: {row['Value']:.2f}", fontsize=9)
         y_pos -= (plt.ylim()[1] - plt.ylim()[0]) * 0.05  
-
+    '''
 
 
     # Format the x-axis
@@ -111,34 +113,48 @@ def evaluate_metrics(predicts, y, dataname, model_name):
     import pandas as pd
     import numpy as np
     from scipy.signal import find_peaks
-    from permetrics.regression import KGE
+    from scipy.spatial import KDTree
+    from permetrics.regression import RegressionMetric
 
-    
+    y,predicts = y[0].to_numpy(), predicts[0].to_numpy()
+    evaluator = RegressionMetric(y, predicts)
+    kge = evaluator.kling_gupta_efficiency(multi_output="raw_values")
+        
+
+    #print(predicts, y)
     mse = np.mean((predicts - y) ** 2)
     rmse = np.sqrt(mse)
 
     bias = np.mean(predicts - y)
 
-    # Mean Peak Error & Peak Timing Error
+    print(mse,rmse,bias)
+
+ 
     true_peaks, _ = find_peaks(y)
     predicted_peaks, _ = find_peaks(predicts)
 
+   # match peaks based on nearest neighbors
+    tree = KDTree(true_peaks.reshape(-1, 1))
+    distances, indices = tree.query(predicted_peaks.reshape(-1, 1))
+
     if len(true_peaks) > 0 and len(predicted_peaks) > 0:
-        mean_peak_error = np.mean(np.abs(y[true_peaks] - predicts[predicted_peaks]))
-        # Approximation of peak timing error by comparing the first peak
-        peak_timing_error = np.abs(true_peaks[0] - predicted_peaks[0])
+        mean_peak_error = np.mean(np.abs(y[true_peaks[indices]] - predicts[predicted_peaks]))
+        peak_timing_error = np.mean(np.abs(true_peaks[indices] - predicted_peaks))
     else:
         mean_peak_error = None
         peak_timing_error = None
 
-    kge = KGE(simulated=predicts, observed=y)
-
 
     # Create a DataFrame from the results
     results_df = pd.DataFrame({
-        'Metric': ['MSE', 'RMSE', 'Bias', 'Mean Peak Error', 'Peak Timing Error', 'KGE'],
-        'Value': [mse, rmse, bias, mean_peak_error, peak_timing_error, kge]
+        'Metric': ['MSE', 'RMSE', 'Bias','KGE', 'Mean Peak Error', 'Peak Timing Error'],
+        'Value': [mse, rmse, bias, kge, mean_peak_error, peak_timing_error]
     })
+    print(results_df)
+
 
     results_df.to_csv(f"model_results/{dataname}/{model_name}/{model_name}_metrics.csv")
     return results_df
+
+def reconstruct():
+    pass
