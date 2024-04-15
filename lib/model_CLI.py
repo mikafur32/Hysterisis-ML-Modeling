@@ -8,14 +8,6 @@ mixed_precision.set_global_policy(
     policy
 )
 
-
-
-
-"""
-TODO: CUDA optionality
-"""
-
-
 """
 =============================================================================
 Example CLI Input: 
@@ -232,9 +224,9 @@ if n_future and n_past:
 
     lag_flag = True
    
-
+# Change plotstep if not specified.
 if not plotstep:
-    plotstep= "Month"
+    plotstep= "Day"
 
 # =============================================================================
 # Run Model
@@ -248,16 +240,18 @@ WSSVQ_WL = {"target": "WL", "features": { "WSS": "WSS", "V": "V", "Q": "Q"}, "Na
 
 
 # Other LSTM variations
-_WSS_V = {"target": "V", "features": { "WSS": "WSS"}, "Name": "+_WSS_V"}
+#WSS_V = {"target": "V", "features": { "WSS": "WSS"}, "Name": "WSS_V"}
 V_Q = {"target": "Q", "features": {"V": "V"}, "Name": "V_Q"}
 Q_WL = {"target": "WL", "features": {"Q": "Q"}, "Name": "Q_WL"}
 WSS_WL = {"target": "WL", "features": {"WSS": "WSS"}, "Name": "WSS_WL"}
 WSS_Q = {"target": "Q", "features": {"WSS": "WSS"}, "Name": "WSS_Q"}
 
+WL_WL = {"target": "WL", "features": { "WL":"WL"}, "Name": "Persistence_WL"}
+
 
 # Define tests
-tests= [WSSVQ_WL]#WSS_V, WSSV_Q, ]
-tests2= [_WSS_V, V_Q, Q_WL]
+tests= [WSSVQ_WL]  #WSS_V, WSSV_Q, ]
+tests2= [WSS_V, V_Q, Q_WL]
 tests3 =[WSS_WL, WSS_Q]
 
 
@@ -273,21 +267,21 @@ if train_flag:
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end,n_past=n_past,# epochs=epochs,
                             n_future=n_future, train_flag= train_range,
-                            predict_flag= test_range, plotstep=plotstep )
+                            predict_flag= True, plotstep=plotstep )
             
         elif train_test_ratio:
 
             evaluate.evaluate(data,  test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end, train_flag= train_range, epochs=epochs,
-                            predict_flag= test_range, plotstep=plotstep)
+                            predict_flag= True, plotstep=plotstep)
         
         else:
             evaluate.evaluate(data, test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end, 
                             train_flag= train_range, #epochs=epochs,
-                            predict_flag= test_range, plotstep=plotstep)
+                            predict_flag= True, plotstep=plotstep)
         
 
 else:
@@ -305,3 +299,4 @@ else:
 
 
         evaluate._predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep=plotstep)
+

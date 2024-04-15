@@ -77,30 +77,9 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
     return train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler
 
 def reshape(scaled, n_past, n_future, timestep_type= 'hr'):
-    '''
-
-    TODO: Set a parameter for the timestep size. Default set to 4 timesteps per hour.
-    
-    '''
-
     X = []
     Y = []
 
-  
-    '''
-    #if(timestep_type == 'hr'):
-    time_to_hr = 4 # 4 timesteps per hour
-    time_to_day = time_to_hr * 24 # 24hrs in a day
-
-    n_future = 12 # Number of timesteps we want to look into the future based on the past timesteps. 4 * 3hrs = 12
-    n_past = 3 * time_to_day # Number of past timesteps we want to use to predict the future. 
-    
-    """  
-        elif(timestep_type == 'day'):
-            n_future = 1 # Number of timesteps we want to look into the future based on the past timesteps. 
-            n_past =  7 # Number of past timesteps we want to use to predict the future. 
-    """
-    '''
     #Reformat input data into a shape: (n_samples x timesteps x n_features)
 
     for i in range(n_past, len(scaled) - n_future + 1):

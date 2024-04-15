@@ -65,20 +65,32 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
     testX, testY = ingest.reshape(test_scaled,  n_past, n_future)#, timestep_type= "hr")
 
     model_names = ['Basic_LSTM', "GRU", 'Stacked_LSTM']#'Bidirectional_LSTM',]
+    def extract_segments(dir_name):
+        parts = dir_name.split("_")
+        bl_part = parts[0] + "_" + parts[1]
+        fl_part = parts[2] + "_" + parts[3][:parts[3].find('WSSVQ')]
+        return bl_part, fl_part
 
     if train_flag:
+        validation_loss_list = []
         for model_name in model_names:
             print(f'evaluating {model_name}')
 
-            model = models_cuda.prebuilt_models(model_name, trainX, trainY, epochs= 1, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
-            validation_loss = models_cuda.evaluate_model(model, testX, testY)
-            
-            ### JUST TRAIN FOR NOW ###
-            models_cuda.plot_model(model_name, validation_loss, data_name)
-            K.clear_session()
+            #model = models_cuda.prebuilt_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
+            model = models_cuda.get_model(model_name, data_name)
+            #validation_loss = models_cuda.evaluate_model(model, testX, testY)
+            #seg = extract_segments(data_name)
+            #validation_loss_list.append([validation_loss, seg[0] ,seg[1] , model_name ])
 
-    if predict_flag:
-        _predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
+            ### JUST TRAIN FOR NOW ###
+            #models_cuda.plot_model(model_name, validation_loss, data_name)
+            #K.clear_session()
+            #validation_loss_df = pd.DataFrame(validation_loss_list, columns=['Validation Loss', 'BL', 'FL', 'Model Name'])
+            #csv_path = rf"C:\Users\Mikey\Documents\Github\Hysterisis-ML-Modeling\lib\lib\model_results\VALIDATION\validation_{model_name}_{data_name}.csv"
+            #validation_loss_df.to_csv(csv_path, index=False)
+    #if predict_flag:
+
+    #_predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
 
 
 
