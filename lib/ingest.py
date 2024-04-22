@@ -55,9 +55,12 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
 
 
 
+    # Testing with the raw value dataset (NEW)
     scaler = StandardScaler()
     transformed_df = scaler.fit_transform(df)
+    #transformed_df = df
     
+
     # Validate validity of not having all cols in renames. 
     # transformed_df = pd.DataFrame(transformed_df, columns= list(renames.values()), index=df.index)
 
@@ -74,7 +77,9 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
     train_scaled = train_scaled.to_numpy()
     test_scaled = test_scaled.to_numpy()
 
+    # Comment scaler out if don't want to scale
     return train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler
+
 
 def reshape(scaled, n_past, n_future, timestep_type= 'hr'):
     X = []

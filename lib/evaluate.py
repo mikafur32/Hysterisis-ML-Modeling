@@ -55,11 +55,13 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
 
     date = datetime.now().strftime("%B_%d_%Y_%H_%M")
 
+    ### Ingest Process ###
     if train_range == None or test_range == None:
         train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, train_test_ratio= 0.8)
 
     else:
         train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, train_range= train_range, test_range= test_range)#train_test_ratio= 0.8)
+        #NOTE: We removed scaler from this one
     
     trainX, trainY = ingest.reshape(train_scaled, n_past, n_future)#, timestep_type= "hr")
     testX, testY = ingest.reshape(test_scaled,  n_past, n_future)#, timestep_type= "hr")
@@ -71,26 +73,38 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
         fl_part = parts[2] + "_" + parts[3][:parts[3].find('WSSVQ')]
         return bl_part, fl_part
 
+
+    ### Training process ###
+    
     if train_flag:
         validation_loss_list = []
         for model_name in model_names:
             print(f'evaluating {model_name}')
 
-            #model = models_cuda.prebuilt_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
+            #model = models_cuda.prebuilt_models(model_name, trainX, trainY, epochs= 1, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
             model = models_cuda.get_model(model_name, data_name)
-            #validation_loss = models_cuda.evaluate_model(model, testX, testY)
+
+            validation_loss = models_cuda.evaluate_model(model, testX, testY)
+
+            #
+            ####### Below here is for extracting just validation losses after training
             #seg = extract_segments(data_name)
             #validation_loss_list.append([validation_loss, seg[0] ,seg[1] , model_name ])
-
-            ### JUST TRAIN FOR NOW ###
-            #models_cuda.plot_model(model_name, validation_loss, data_name)
-            #K.clear_session()
             #validation_loss_df = pd.DataFrame(validation_loss_list, columns=['Validation Loss', 'BL', 'FL', 'Model Name'])
             #csv_path = rf"C:\Users\Mikey\Documents\Github\Hysterisis-ML-Modeling\lib\lib\model_results\VALIDATION\validation_{model_name}_{data_name}.csv"
             #validation_loss_df.to_csv(csv_path, index=False)
-    #if predict_flag:
+            #######
 
-    #_predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
+            ### JUST TRAIN FOR NOW ###
+            models_cuda.plot_model(model_name, validation_loss, data_name)
+            K.clear_session()
+    
+    
+    ### Prediction ###  
+    # If don't want to scale (temporary soln)   
+    #scaler = None
+    #if predict_flag:
+    _predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
 
 
 

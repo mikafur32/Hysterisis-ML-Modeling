@@ -79,10 +79,14 @@ parser.add_argument("-n_future", type=str, required= False,
 parser.add_argument("-epochs", type=int, required= False,
                     help="Number of epochs to train on ")
 
+#parser.add_argument("-scaler", type=int, required= False,
+                    #help="Number of epochs to train on ")
+
+
 parser.add_argument("-event_range", type=str, required= True,
                     help="A start and end date for an event to be used for prediction. ex: [2022-03-18 00:00:00', '2022-04-07 00:00:00'] ")
 
-parser.add_argument("-plotstep", type=str, choices=["Day", "Month"],required= False,
+parser.add_argument("-plotstep", type=str, choices=["Day", "Month"], required= False,
                     help= "Time step for plot ticks. Default: Month")
 
 parser.add_argument("-vp", type=str, choices=['y', 'n'], required= False,
@@ -220,8 +224,6 @@ lag_flag = False
 if n_future and n_past:
     n_future = int(n_future)
     n_past = int(n_past)
-
-
     lag_flag = True
    
 # Change plotstep if not specified.
@@ -265,16 +267,9 @@ if train_flag:
         if lag_flag:
             evaluate.evaluate(data,  test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
-                            event_start=event_start, event_end=event_end,n_past=n_past,# epochs=epochs,
+                            event_start=event_start, event_end=event_end, n_past=n_past,# epochs=epochs,
                             n_future=n_future, train_flag= train_range,
                             predict_flag= True, plotstep=plotstep )
-            
-        elif train_test_ratio:
-
-            evaluate.evaluate(data,  test["features"], test["target"],
-                            data_name, train_range=train_range, test_range=test_range,
-                            event_start=event_start, event_end=event_end, train_flag= train_range, epochs=epochs,
-                            predict_flag= True, plotstep=plotstep)
         
         else:
             evaluate.evaluate(data, test["features"], test["target"],

@@ -20,12 +20,14 @@ def plot_predicts(model_name, predicts, testY, test_dates, dataname, scaler, eve
     testY= testY.flatten()
     predicts = predicts.to_numpy().flatten()
 
+    # repeat columns for the inverse transformer -- only accepts same shape. 
     predicts = pd.concat([pd.Series(predicts),pd.Series(predicts),pd.Series(predicts),pd.Series(predicts)], axis=1)
     testY =  pd.concat([pd.Series(testY),pd.Series(testY),pd.Series(testY),pd.Series(testY)], axis=1)
 
-
-    predicts = scaler.inverse_transform(predicts)
-    testY = scaler.inverse_transform(testY)
+    # Comment this out to keep in normalized values
+    #if scaler != None:
+     #   predicts = scaler.inverse_transform(predicts)
+      #  testY = scaler.inverse_transform(testY)
     
     # Get the smallest shape
     shape = test_dates.shape[0] if predicts.shape[0] > test_dates.shape[0] else predicts.shape[0]
@@ -37,15 +39,17 @@ def plot_predicts(model_name, predicts, testY, test_dates, dataname, scaler, eve
     predicts = pd.DataFrame(predicts)
 
     # Apply datum adjustments
-    datum = 425.85
-    predicts[0] = predicts[0].apply(lambda x: x - datum)
-    print(predicts)
+    # This is a temporary fix for the datum issue
+    # Commenting out when not inverse transforming
+    #datum = 425.85
+    #predicts[0] = predicts[0].apply(lambda x: x - datum)
+    #print(predicts)
 
-    testY[0]= testY[0].apply(lambda x: x - datum)
+    #testY[0]= testY[0].apply(lambda x: x - datum)
 
     # Export predicts
-    if(not os.path.exists(f"lib/model_results/{dataname}/{model_name}/predict_results2")):
-        os.makedirs(f"lib/model_results/{dataname}/{model_name}/predict_results2", exist_ok= True) 
+    if(not os.path.exists(f"lib/model_results/{dataname}/{model_name}/predict_results")):
+        os.makedirs(f"lib/model_results/{dataname}/{model_name}/predict_results", exist_ok= True) 
 
     # Set datetime indicies
     predicts["datetime"] = test_dates[:shape].index
@@ -93,9 +97,11 @@ def plot_predicts(model_name, predicts, testY, test_dates, dataname, scaler, eve
         plt.legend()
         plt.tight_layout()
 
+
         plt.savefig(fr"lib/model_results/{dataname}/{model_name}/predict_results/{model_name}_event_predictions.png")  
         plt.close()
 
+    
     predicts.to_csv(f"lib/model_results/{dataname}/{model_name}/predict_results/{model_name}_predicts.csv")
     #testY.to_csv(f"lib/model_results/{dataname}/{model_name}/predict_results_flow/{model_name}_event_observed.csv")
 

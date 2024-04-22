@@ -49,9 +49,7 @@ def plot_model(model_name, valid_loss, data):
 
 
 def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="mse", load_models=False, data_name=None):
-    if(load_models):
-        return load_model(f'saved_model_multi/{data_name}/{model_name}_Saved_{data_name}')
-
+    
     # Depending on the loss, we might need to pass a custom loss function
     if loss == "nse":
         loss = nseloss  
@@ -64,10 +62,6 @@ def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="
         model = BasicLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "BasicLSTM")
     elif(model_name == 'Stacked_LSTM'):
         model = StackedLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "StackedLSTM")
-    
-    elif(model_name == 'Bidirectional_LSTM'):
-        model = BidirectionalLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "BiDirectionalLSTM")
-    
     elif(model_name == 'GRU'):
         model = GRUModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "GRU")
 
@@ -95,7 +89,6 @@ def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="
     return model.model
 
 
-
 def evaluate_model(model, validX, validY):
     print("evaluating model")
     validation_loss = model.evaluate(validX, validY, verbose=1)
@@ -104,7 +97,7 @@ def evaluate_model(model, validX, validY):
 
 def get_model(model_name, data= 'Henry_2017_2020'):
     from keras.models import load_model
-    path = f'C:/Users/Mikey/Documents/Github/Hysterisis-ML-Modeling/lib/saved_model_multi/{data}/{model_name}_Saved_{data}'
+    path = f'C:/Users/Mikey/Documents/Github/Hysterisis-ML-Modeling/saved_model_multi/{data}/{model_name}_Saved_{data}'
     if not os.path.exists(path):
         print(f"FILE NOT FOUND \n Given path: {path}")
         raise FileNotFoundError("Path to model does not exist. Check the dataname argument.")
