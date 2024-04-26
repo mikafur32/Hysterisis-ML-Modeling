@@ -25,7 +25,7 @@ from keras import backend as K
 #import models_base
 
 
-import models_cuda
+import models_cuda, models_base
 import ingest, predict
 
 
@@ -51,7 +51,7 @@ mixed_precision.set_global_policy(
     policy
 )
 
-def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10, train_test_ratio= .8, train_range= None, test_range= None, n_past= 96, n_future= 12, train_flag= True, predict_flag= True, plotstep= "Month", scaler= True):
+def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10, train_test_ratio= .8, train_range= None, test_range= None, n_past= 96, n_future= 12, train_flag= True, predict_flag= True, plotstep= "Month", scaler= True, cuda= False):
 
     date = datetime.now().strftime("%B_%d_%Y_%H_%M")
 
@@ -75,19 +75,26 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
         validation_loss_list = []
         for model_name in model_names:
             print(f'evaluating {model_name}')
+            if cuda:
 
-            model = models_cuda.train_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
-            #model = models_cuda.get_model(model_name, data_name)
-            validation_loss = models_cuda.evaluate_model(model, testX, testY)
-            #seg = extract_segments(data_name)
-            #validation_loss_list.append([validation_loss, seg[0] ,seg[1] , model_name ])
+                model = models_cuda.train_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
+                #model = models_cuda.get_model(model_name, data_name)
+                validation_loss = models_cuda.evaluate_model(model, testX, testY)
+                #seg = extract_segments(data_name)
+                #validation_loss_list.append([validation_loss, seg[0] ,seg[1] , model_name ])
 
-            ### JUST TRAIN FOR NOW ###
-            #models_cuda.plot_model(model_name, validation_loss, data_name)
-            #K.clear_session()
-            #validation_loss_df = pd.DataFrame(validation_loss_list, columns=['Validation Loss', 'BL', 'FL', 'Model Name'])
-            #csv_path = rf"C:\Users\Mikey\Documents\Github\Hysterisis-ML-Modeling\lib\lib\model_results\VALIDATION\validation_{model_name}_{data_name}.csv"
-            #validation_loss_df.to_csv(csv_path, index=False)
+                ### JUST TRAIN FOR NOW ###
+                #models_cuda.plot_model(model_name, validation_loss, data_name)
+                #K.clear_session()
+                #validation_loss_df = pd.DataFrame(validation_loss_list, columns=['Validation Loss', 'BL', 'FL', 'Model Name'])
+                #csv_path = rf"C:\Users\Mikey\Documents\Github\Hysterisis-ML-Modeling\lib\lib\model_results\VALIDATION\validation_{model_name}_{data_name}.csv"
+                #validation_loss_df.to_csv(csv_path, index=False)
+            else:
+                model = models_base.train_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
+                #model = models_base.get_model(model_name, data_name)
+                validation_loss = models_base.evaluate_model(model, testX, testY)
+
+
     #if predict_flag:
 
     _predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)

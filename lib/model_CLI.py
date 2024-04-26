@@ -94,6 +94,9 @@ parser.add_argument("-dn", type=str, required= True,
 parser.add_argument("-scaler", type=str, choices=['y', 'n'], required= False,
                     help="Applies a standard scaler to the input data. Can add options later. ")
 
+parser.add_argument("-CUDA", action="store_true", help= "Activate CUDA Optimality for GPU.")
+
+
 parser.add_argument("-debug", action="store_true")
 
 
@@ -118,6 +121,7 @@ epochs = args.epochs
 plotstep = args.plotstep 
 dataname = args.dn
 scaler = args.scaler
+CUDA = args.CUDA
 debug = args.debug
 
 
@@ -277,21 +281,21 @@ if train_flag:
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end,n_past=n_past,# epochs=epochs,
                             n_future=n_future, train_flag= train_range,
-                            predict_flag= True, plotstep=plotstep, scaler=scaler )
+                            predict_flag= True, plotstep=plotstep, scaler=scaler, cuda= CUDA )
             
         elif train_test_ratio:
 
             evaluate.evaluate(data,  test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end, train_flag= train_range, epochs=epochs,
-                            predict_flag= True, plotstep=plotstep, scaler=scaler)
+                            predict_flag= True, plotstep=plotstep, scaler=scaler, cuda= CUDA )
         
         else:
             evaluate.evaluate(data, test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end, 
                             train_flag= train_range, #epochs=epochs,
-                            predict_flag= True, plotstep=plotstep, scaler=scaler)
+                            predict_flag= True, plotstep=plotstep, scaler=scaler, cuda= CUDA )
         
 # LATER, get this to choose train/not train in CLI
 else:

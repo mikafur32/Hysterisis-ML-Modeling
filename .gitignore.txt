@@ -6,3 +6,7 @@ __pycache__/
 *.pyc
 *.idea
 *.pkl
+*.data*
+*.index
+*.ipynb*
+*.vscode
