@@ -48,7 +48,7 @@ def plot_model(model_name, valid_loss, data):
 
 
 
-def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="mse", load_models=False, data_name=None):
+def train_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="mse", load_models=False, data_name=None):
     if(load_models):
         return load_model(f'saved_model_multi/{data_name}/{model_name}_Saved_{data_name}')
 
@@ -104,7 +104,7 @@ def evaluate_model(model, validX, validY):
 
 def get_model(model_name, data= 'Henry_2017_2020'):
     from keras.models import load_model
-    path = f'C:/Users/Mikey/Documents/Github/Hysterisis-ML-Modeling/lib/saved_model_multi/{data}/{model_name}_Saved_{data}'
+    path = f'C:/Users/Mikey/Documents/Github/Hysterisis-ML-Modeling/saved_model_multi/{data}/{model_name}_Saved_{data}'
     if not os.path.exists(path):
         print(f"FILE NOT FOUND \n Given path: {path}")
         raise FileNotFoundError("Path to model does not exist. Check the dataname argument.")

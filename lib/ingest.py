@@ -41,7 +41,7 @@ def train_test_split(df, train_range, test_range):
 
     return df[train_from:train_to], df[test_from:test_to]
 
-def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, test_range= None, train_test_ratio= None):
+def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, test_range= None, train_test_ratio= None, scaler=True):
     
     df, all_dates = read_in(csv, target, renames)
 
@@ -54,9 +54,11 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
         test_range   = [all_dates.iloc[int(np.ceil(len(all_dates) * train_test_ratio))], all_dates[-1]]
 
 
-
-    scaler = StandardScaler()
-    transformed_df = scaler.fit_transform(df)
+    if scaler:
+        scaler = StandardScaler()
+        transformed_df = scaler.fit_transform(df)
+    else: 
+        transformed_df = df
     
     # Validate validity of not having all cols in renames. 
     # transformed_df = pd.DataFrame(transformed_df, columns= list(renames.values()), index=df.index)

@@ -91,6 +91,9 @@ parser.add_argument("-vp", type=str, choices=['y', 'n'], required= False,
 parser.add_argument("-dn", type=str, required= True,
                     help="Supply the name you want for the run.")
 
+parser.add_argument("-scaler", type=str, choices=['y', 'n'], required= False,
+                    help="Applies a standard scaler to the input data. Can add options later. ")
+
 parser.add_argument("-debug", action="store_true")
 
 
@@ -114,6 +117,7 @@ epochs = args.epochs
 #vp = args.vp -- Inherent Integration
 plotstep = args.plotstep 
 dataname = args.dn
+scaler = args.scaler
 debug = args.debug
 
 
@@ -140,6 +144,7 @@ if debug:
 
     #print("vp: ", vp) 
     print("dataname: ", dataname) 
+    print("scaler: ", scaler) 
     print("debug: ", debug)
     print('''
 =============================================================================
@@ -168,11 +173,17 @@ elif not model_names in ['Basic_LSTM', "GRU", 'Stacked_LSTM']:
 valid_date_range_RE = "\['(\d{1,2}/\d{1,2}/\d{4}\s\d{1,2}:\d{2})','(\d{1,2}/\d{1,2}/\d{4}\s\d{1,2}:\d{2})'\]" 
 
 
-# also
+# also (train or not)
 if train == 'y':
     train=True
 else:
     train= False
+
+# also (scale or not)
+if scaler == 'y':
+    scaler=True
+else:
+    scaler= False
 
 
 # Verify test date range
@@ -197,7 +208,6 @@ elif re.match(valid_date_range_RE, event_range):
     match = re.match(valid_date_range_RE, event_range)
     event_range = [match[1], match[2]]
     #print(event_range, type(event_range))
-
 else:
     raise ValueError("\nInvalid event_range date range format. ex: ['1/1/2017 0:00','12/31/2021 23:45']")
 
@@ -261,29 +271,29 @@ if train_flag:
         data_name = dataname + f"{test['Name']}"
         print(f"\n=============Running {data_name} =============\n")
         event_start, event_end = event_range[0], event_range[1]
-
+   
         if lag_flag:
             evaluate.evaluate(data,  test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end,n_past=n_past,# epochs=epochs,
                             n_future=n_future, train_flag= train_range,
-                            predict_flag= True, plotstep=plotstep )
+                            predict_flag= True, plotstep=plotstep, scaler=scaler )
             
         elif train_test_ratio:
 
             evaluate.evaluate(data,  test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end, train_flag= train_range, epochs=epochs,
-                            predict_flag= True, plotstep=plotstep)
+                            predict_flag= True, plotstep=plotstep, scaler=scaler)
         
         else:
             evaluate.evaluate(data, test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end, 
                             train_flag= train_range, #epochs=epochs,
-                            predict_flag= True, plotstep=plotstep)
+                            predict_flag= True, plotstep=plotstep, scaler=scaler)
         
-
+# LATER, get this to choose train/not train in CLI
 else:
     event_start, event_end = event_range[0], event_range[1]
 

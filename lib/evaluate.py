@@ -51,7 +51,7 @@ mixed_precision.set_global_policy(
     policy
 )
 
-def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10, train_test_ratio= .8, train_range= None, test_range= None, n_past= 96, n_future= 12, train_flag= True, predict_flag= True, plotstep= "Month"):
+def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10, train_test_ratio= .8, train_range= None, test_range= None, n_past= 96, n_future= 12, train_flag= True, predict_flag= True, plotstep= "Month", scaler= True):
 
     date = datetime.now().strftime("%B_%d_%Y_%H_%M")
 
@@ -76,9 +76,9 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
         for model_name in model_names:
             print(f'evaluating {model_name}')
 
-            #model = models_cuda.prebuilt_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
-            model = models_cuda.get_model(model_name, data_name)
-            #validation_loss = models_cuda.evaluate_model(model, testX, testY)
+            model = models_cuda.train_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
+            #model = models_cuda.get_model(model_name, data_name)
+            validation_loss = models_cuda.evaluate_model(model, testX, testY)
             #seg = extract_segments(data_name)
             #validation_loss_list.append([validation_loss, seg[0] ,seg[1] , model_name ])
 
@@ -90,11 +90,11 @@ def evaluate(csv, columns, target, data_name, event_start, event_end, epochs= 10
             #validation_loss_df.to_csv(csv_path, index=False)
     #if predict_flag:
 
-    #_predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
+    _predict(event_start, event_end, model_names, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
 
 
-
-def _predict(tstart, tend, model_names, testX, testY, test_dates, data_name, scaler, plotstep= "Month"):
+# MAYBE HERE needs to be edited to keep the scaled OBS values for the metrics calc
+def _predict(tstart, tend, model_names, testX, testY, test_dates, data_name, scaler=True, plotstep= "Month"):
 
     event_range = [tstart, tend]
     print(event_range, model_names)
