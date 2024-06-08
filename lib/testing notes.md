@@ -1,6 +1,6 @@
 Testing notes:
 
-python model_CLI.py -data "C:\\Users\\Mikey\\Documents\\Github\\Hysterisis-ML-Modeling\\data\\Henry_4vars_2017_2023.csv" -model all -train n -event_range "['3/18/2022 0:00','4/7/2022 23:45']" -dn 6HOURSPL_1DAYFL  -debug
+python model_CLI.py -data "C:\Users\ehouse\OneDrive - Tulane University\Documents\GitHub\Hysterisis-ML-Modeling\data\Henry_4vars_2017_2023.csv" -model all -train n -event_range "['3/18/2022 0:00','4/7/2022 23:45']" -n_past 96 -n_future 96 -dn cudatesting1 -scaler y -debug
 
 C:\Users\Mikey\Documents\Github\Hysterisis-ML-Modeling\lib\ingest.py:51: FutureWarning: Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
   train_range, test_range = [all_dates[0], all_dates[-1]], [all_dates[0], all_dates[-1]]

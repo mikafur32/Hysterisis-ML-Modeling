@@ -25,7 +25,7 @@ from keras import backend as K
 #import models_base
 
 
-import models_cuda
+import models_cuda, models_base
 import ingest, predict
 
 

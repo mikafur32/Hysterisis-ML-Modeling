@@ -1,17 +1,24 @@
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, LSTM
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, LSTM
 from matplotlib import pyplot as plt
-from keras.callbacks import EarlyStopping
-from keras.initializers import GlorotNormal
-import keras.backend as K
-import os
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.initializers import GlorotNormal
+import tensorflow.keras.backend as K
+import os,sys
 import pickle
+
+from model_defs.BaseModel import BaseModel
+from model_defs.BasicLSTMModel import BasicLSTMModel
+from model_defs.StackedLSTMModel import StackedLSTMModel
+from model_defs.BidirectionalLSTMModel import BidirectionalLSTMModel
+from model_defs.GRUModel import GRUModel
+from tensorflow.keras.models import load_model
 
 '''
 TODO: 
 1. Feature importances for each
-
 '''
+
 def nseloss(y_true, y_pred):
   return K.sum((y_pred-y_true)**2)/K.sum((y_true-K.mean(y_true))**2)
 
@@ -32,91 +39,61 @@ def plot_model(model_name, valid_loss, data):
     plt.text(0.5, -0.1, description, transform=plt.gca().transAxes,
             fontsize=10, color='gray', ha='center', va='center')
     
-    os.makedirs(fr"model_results/{data}/{model_name}", exist_ok=True) #If the saved model directory doesn't exist, make it    
+    if not os.path.exists(f"lib/model_results/{data}/{model_name}"):
+        os.makedirs(fr"lib/model_results/{data}/{model_name}") #If the saved model directory doesn't exist, make it    
 
-    plt.savefig(fr"model_results/{data}/{model_name}/{model_name}_training_validation.png")  
-    plt.close() #Figures are saved rather than printed to kernel
+    plt.savefig(fr"lib/model_results/{data}/{model_name}/{model_name}_training_validation.png")  
+    plt.close() 
 
 
 
-def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size= 16, loss= "mse", load_models=False, data= None):
+
+def train_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="mse", load_models=False, data_name=None):
     if(load_models):
-        return get_model(model_name, data)
-    
+        return load_model(f'saved_model_multi/{data_name}/{model_name}_Saved_{data_name}')
+
+    # Depending on the loss, we might need to pass a custom loss function
     if loss == "nse":
-        loss = nseloss
+        loss = nseloss  
 
+    model = None
+    output_units = trainY.shape[1]
+
+    # Instantiate the appropriate model class
     if(model_name == 'Basic_LSTM'):
-        # The LSTM architecture -- Basic RNN | one layer then dense
-        model = Sequential()
-        model.add(LSTM(units=125, activation="tanh", input_shape=(trainX.shape[1], trainX.shape[2])))
-        model.add(Dense(units=1))
-        # Compiling the model
-        model.compile(optimizer="RMSprop", loss=loss)
-        model.summary()
-
+        model = BasicLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "BasicLSTM")
     elif(model_name == 'Stacked_LSTM'):
-        model = Sequential([
-            LSTM(64, activation='tanh', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=True),
-            Dropout(0.2),
-            LSTM(64, activation='tanh', return_sequences=True),
-            Dropout(0.2),
-            LSTM(32, activation='tanh'),
-            Dropout(0.2),
-            Dense(trainY.shape[1])
-        ])
-        model.compile(optimizer="RMSprop", loss=loss)
-        model.summary()
-
+        model = StackedLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "StackedLSTM")
     
-    elif(model_name == 'Attention_LSTM'):
-        initializer = GlorotNormal(seed=42)
-        model = Sequential([
-            LSTM(64, activation='tanh', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=True, kernel_initializer=GlorotNormal()),
-            SeqSelfAttention(attention_activation='tanh', kernel_initializer=GlorotNormal()),
-            Dropout(0.2),
-            Dense(trainY.shape[1])
-        ])
-        model.compile(optimizer="RMSprop", loss=loss)
-        model.summary()
-    
-
     elif(model_name == 'Bidirectional_LSTM'):
-        from keras.layers import Bidirectional
-
-        model = Sequential()
-        model.add(Bidirectional(LSTM(64, activation='tanh', return_sequences=True), input_shape=(trainX.shape[1], trainX.shape[2])))
-        model.add(LSTM(32, activation='tanh', return_sequences=False))
-        model.add(Dropout(0.2))
-        model.add(Dense(trainY.shape[1]))
-
-        model.compile(optimizer="RMSprop", loss=loss)
-        model.summary()
-
-    elif(model_name == 'GRU'):
-        from keras.layers import GRU
-
-        model = Sequential()
-        model.add(GRU(128, activation='tanh', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=False))
-        model.add(Dropout(0.2))
-        model.add(Dense(trainY.shape[1]))
-        model.compile(optimizer="RMSprop", loss=loss)
-
-    early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
-    history = model.fit(trainX, trainY, epochs=epochs, batch_size=batch_size, validation_split=0.1, verbose=1, callbacks=[early_stopping])
+        model = BidirectionalLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "BiDirectionalLSTM")
     
-    # Save model
-    os.makedirs(f"saved_model_multi/{data}/trainHistoryDict", exist_ok=True) #If the saved model directory doesn't exist, make it    
+    elif(model_name == 'GRU'):
+        model = GRUModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "GRU")
 
+
+    # Save model and history
+    model_directory = f"saved_model_multi/{data_name}"
+    
+
+    # Build and compile the model
+    if model is not None:
+        model.build_model()
+    print(model.model.summary())
+    # Train the model
+    history = model.train_model(trainX, trainY, epochs=epochs, batch_size=batch_size, checkpoint_path= model_directory)
+    
+   
     print("saving model")
-    model.save(f'saved_model_multi/{data}/{model_name}_Saved_{data}')    
-
-    # Save history
+    model.model.save(f'{model_directory}\\{model_name}_Saved_{data_name}')    
     print("saving history") 
-    with open(f'saved_model_multi/{data}/trainHistoryDict/{model_name}.pkl', 'wb+') as file_pi:
+
+    os.makedirs(f"{model_directory}/trainHistoryDict", exist_ok=True) #If the saved model directory doesn't exist, make it    
+    with open(f'{model_directory}/trainHistoryDict/{model_name}.pkl', 'wb+') as file_pi:
         pickle.dump(history.history, file_pi)
 
-    return model
+    return model.model
+
 
 
 def evaluate_model(model, validX, validY):
@@ -125,8 +102,21 @@ def evaluate_model(model, validX, validY):
     print(f'Validation loss: {validation_loss}')
     return validation_loss
 
-
 def get_model(model_name, data= 'Henry_2017_2020'):
     from keras.models import load_model
-    print("retrieving and loading model")
-    return load_model(f'saved_model_multi/{data}/{model_name}_Saved_{data}')
+    path = f'C:/Users/Mikey/Documents/Github/Hysterisis-ML-Modeling/saved_model_multi/{data}/{model_name}_Saved_{data}'
+    if not os.path.exists(path):
+        print(f"FILE NOT FOUND \n Given path: {path}")
+        raise FileNotFoundError("Path to model does not exist. Check the dataname argument.")
+    print(f"retrieving and loading {path} model.\n")
+    
+    try:
+        model = load_model(path)
+        print("model load status: SUCCESS")
+        print(model.summary())
+
+    except:
+        print("model load status: FAILED")
+        sys.exit()
+
+    return model
