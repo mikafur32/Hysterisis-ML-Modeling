@@ -51,40 +51,70 @@ mixed_precision.set_global_policy(
     policy
 )
 
-def evaluate(csv, columns, target, data_name, train_range, test_range, event_start, event_end, n_past= 96, n_future= 12, train_flag= True, predict_flag= True):
+def evaluate(csv, saveto, columns, target, data_name, event_start, event_end, epochs= 1, train_test_ratio= .8, train_range= None, test_range= None, n_past= 96, n_future= 12, train_flag= True, plotstep= "Month", scaler= True):
 
     date = datetime.now().strftime("%B_%d_%Y_%H_%M")
 
+    if train_range == None or test_range == None:
+        train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, train_test_ratio= 0.8)
 
+    else:
+        train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, train_range= train_range, test_range= test_range)#train_test_ratio= 0.8)
+    
+    #print("+++++++++++++++++++++++++++++++++++++++++++++++++\n")
+    #print("train_scaled", train_scaled[:5])
 
-    train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, train_range= train_range, test_range= test_range)#train_test_ratio= 0.8)
     trainX, trainY = ingest.reshape(train_scaled, n_past, n_future)#, timestep_type= "hr")
     testX, testY = ingest.reshape(test_scaled,  n_past, n_future)#, timestep_type= "hr")
 
-
     model_names = ['Basic_LSTM', "GRU", 'Stacked_LSTM']#'Bidirectional_LSTM',]
+    
 
-    if train_flag:
-        for model_name in model_names:
-            print(f'evaluating {model_name}')
-
-            model = models_cuda.prebuilt_models(model_name, trainX, trainY, epochs= 10, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
-            validation_loss = models_cuda.evaluate_model(model, testX, testY)
-            
-            ### JUST TRAIN FOR NOW ###
-            models_cuda.plot_model(model_name, validation_loss, data_name)
-            K.clear_session()
-
-    if predict_flag:
-        _predict(event_start, event_end, model_names, testX, testY, test_dates, data_name)
-
-
-
-def _predict(tstart, tend, model_names, testX, testY, test_dates, data_name):
-
-    event_range = [tstart, tend]
-    print(event_range, model_names)
+    validation_loss_list = []
     for model_name in model_names:
-        print(f"predicting {model_name} over {event_range}")
-        predicts = predict.predict(model_name, testX, data_name)
-        predict.plot_predicts(model_name, predicts, testY, test_dates, data_name, event_range= event_range, event_plotstep= "Day")
+            if train_flag:
+
+                print(f'evaluating {model_name}')
+
+                # Train
+                model = models_cuda.train_models(model_name, trainX, trainY, epochs, batch_size=32, loss= "mse", load_models=False, data_name= data_name)
+                
+                # Predictions 
+                _predict(saveto, event_start, event_end, model_name, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
+
+                # Extracting word segments from data_name for validation loss csv  
+                def extract_segments(dir_name):
+                    parts = dir_name.split("_")
+                    bl_part = parts[0] + "_" + parts[1]
+                    fl_part = parts[2] + "_" + parts[3][:parts[3].find('WSSVQ')]
+                    return bl_part, fl_part
+                
+                # Validation Loss
+                validation_loss = models_cuda.evaluate_model(model, testX, testY)
+                seg = extract_segments(data_name)
+                validation_loss_list.append([validation_loss, seg[0] ,seg[1] , model_name ])
+
+                # Plotting Validation & Training losses
+                models_cuda.plot_model(model_name, validation_loss, data_name)
+                K.clear_session()
+
+                # Saving Validation Loss to CSV
+                validation_loss_df = pd.DataFrame(validation_loss_list, columns=['Validation Loss', 'BL', 'FL', 'Model Name'])
+                csv_path = rf"{saveto}/model_results/{data_name}\{model_name}\{model_name}_{data_name}_validation.csv"
+                validation_loss_df.to_csv(csv_path, index=False)
+            else:
+                # If already trained, get model & predict
+                model = models_cuda.get_model(model_name, saveto=saveto, data=data_name)
+                _predict(saveto, event_start, event_end, model_name, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
+
+
+
+
+# MAYBE HERE needs to be edited to keep the scaled OBS values for the metrics calc
+def _predict(saveto, tstart, tend, model_name, testX, testY, test_dates, data_name, scaler=True, plotstep= "Month"):
+    
+    event_range = [tstart, tend]
+    print(f"predicting {model_name} over {event_range}")
+
+    predicts = predict.predict(model_name, testX, saveto, data_name)
+    predict.plot_predicts(saveto, model_name, predicts, testY, test_dates, data_name, scaler=scaler ,event_range= event_range, event_plotstep= plotstep)

@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.initializers import GlorotNormal
 import tensorflow.keras.backend as K
-import os
+import os,sys
 import pickle
 
 from model_defs.BaseModel import BaseModel
@@ -39,17 +39,17 @@ def plot_model(model_name, valid_loss, data):
     plt.text(0.5, -0.1, description, transform=plt.gca().transAxes,
             fontsize=10, color='gray', ha='center', va='center')
     
-    os.makedirs(fr"model_results/{data}/{model_name}", exist_ok=True) #If the saved model directory doesn't exist, make it    
+    if not os.path.exists(f"lib/model_results/{data}/{model_name}"):
+        os.makedirs(fr"lib/model_results/{data}/{model_name}") #If the saved model directory doesn't exist, make it    
 
-    plt.savefig(fr"model_results/{data}/{model_name}/{model_name}_training_validation.png")  
-    plt.close() #Figures are saved rather than printed to kernel
+    plt.savefig(fr"lib/model_results/{data}/{model_name}/{model_name}_training_validation.png")  
+    plt.close() 
 
 
 
 
-def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="mse", load_models=False, data_name=None):
+def train_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="mse", load_models=False, data_name=None):
     if(load_models):
-        print("retrieving and loading model")
         return load_model(f'saved_model_multi/{data_name}/{model_name}_Saved_{data_name}')
 
     # Depending on the loss, we might need to pass a custom loss function
@@ -62,7 +62,6 @@ def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="
     # Instantiate the appropriate model class
     if(model_name == 'Basic_LSTM'):
         model = BasicLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "BasicLSTM")
-        
     elif(model_name == 'Stacked_LSTM'):
         model = StackedLSTMModel(input_shape=(trainX.shape[1], trainX.shape[2]), output_units=output_units, loss=loss, data_name=data_name + "StackedLSTM")
     
@@ -80,7 +79,7 @@ def prebuilt_models(model_name, trainX, trainY, epochs=10, batch_size=16, loss="
     # Build and compile the model
     if model is not None:
         model.build_model()
-
+    print(model.model.summary())
     # Train the model
     history = model.train_model(trainX, trainY, epochs=epochs, batch_size=batch_size, checkpoint_path= model_directory)
     
@@ -103,8 +102,21 @@ def evaluate_model(model, validX, validY):
     print(f'Validation loss: {validation_loss}')
     return validation_loss
 
-
 def get_model(model_name, data= 'Henry_2017_2020'):
     from keras.models import load_model
-    print("retrieving and loading model")
-    return load_model(f'saved_model_multi/{data}/{model_name}_Saved_{data}')
+    path = f'C:/Users/Mikey/Documents/Github/Hysterisis-ML-Modeling/saved_model_multi/{data}/{model_name}_Saved_{data}'
+    if not os.path.exists(path):
+        print(f"FILE NOT FOUND \n Given path: {path}")
+        raise FileNotFoundError("Path to model does not exist. Check the dataname argument.")
+    print(f"retrieving and loading {path} model.\n")
+    
+    try:
+        model = load_model(path)
+        print("model load status: SUCCESS")
+        print(model.summary())
+
+    except:
+        print("model load status: FAILED")
+        sys.exit()
+
+    return model
