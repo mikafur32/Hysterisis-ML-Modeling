@@ -263,10 +263,11 @@ WL_WL = {"target": "WL", "features": { "WL":"WL"}, "Name": "Persistence_WL"}
 tests= [WSSVQ_WL]  #WSS_V, WSSV_Q, ]
 tests2= [WSS_V, V_Q, Q_WL]
 tests3 =[WSS_WL, WSS_Q]
+tests4 = [WL_WL]
 
 
 if train_flag:
-    for test in tests:
+    for test in tests4:
             
         data_name = dataname + f"{test['Name']}"
         print(f"\n=============Running {data_name} =============\n")
@@ -297,7 +298,7 @@ if train_flag:
 else:
     event_start, event_end = event_range[0], event_range[1]
 
-    for test in tests:
+    for test in tests4:
         data_name = dataname + f"{test['Name']}"
 
         train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(data, test["target"], train_range= train_range, test_range= test_range)
