@@ -42,6 +42,9 @@ parser = argparse.ArgumentParser(description=
 parser.add_argument("-data", type=str, required= True,
                     help="The data (csv) to use including the path to folder and extension. See docs for more information about format.")
 
+parser.add_argument("-saveto", type=str, required= True,
+                    help="The file path to use for saving model and output. See docs for more information about format.")
+
 parser.add_argument("-model", type=str, required= True,
                     help="Supply the name of the model to be ran. See docs for definitions and types. 'all' for all models.")
 
@@ -105,6 +108,7 @@ args = parser.parse_args()
 
 # assign and test the arguments
 data = args.data
+saveto = args.saveto
 model_names = args.model
 train = args.train
 train_test_ratio = args.train_test_ratio
@@ -129,6 +133,7 @@ if debug:
 =============================================================================
           ''')
     print("data: ", data)
+    print("saveto: ", saveto)
     print("model_names: ", model_names) 
 
     print("train: ", train) 
@@ -159,6 +164,14 @@ elif not os.path.exists(data):
     print("\nThe csv doesn't exist, check the path, name, and file type")
     sys.exit()
 
+# exit if there was no saveto path supplied or the path doesn't exist
+if saveto == None:
+  
+    print("\nSupply saveto path with the -saveto command line argument")
+    sys.exit()
+elif not os.path.exists(saveto):
+    print("\nThe saveto path doesn't exist, check it and try again.")
+    sys.exit()
 
 # Verify correct model name. If 'all' assign model-names to all possible models. 
 if model_names == 'all':
@@ -273,26 +286,26 @@ if train_flag:
         event_start, event_end = event_range[0], event_range[1]
    
         if lag_flag:
-            evaluate.evaluate(data,  test["features"], test["target"],
+            evaluate.evaluate(data, saveto, test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end,n_past=n_past,# epochs=epochs,
-                            n_future=n_future, train_flag= train_range,
-                            predict_flag= True, plotstep=plotstep, scaler=scaler )
+                            n_future=n_future, train_flag= train_range, #predict_flag= True, 
+                            plotstep=plotstep, scaler=scaler )
             
         elif train_test_ratio:
 
             evaluate.evaluate(data,  test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
-                            event_start=event_start, event_end=event_end, train_flag= train_range, epochs=epochs,
-                            predict_flag= True, plotstep=plotstep, scaler=scaler)
+                            event_start=event_start, event_end=event_end, 
+                            train_flag= train_range, epochs=epochs,#predict_flag= True, 
+                            plotstep=plotstep, scaler=scaler)
         
         else:
             evaluate.evaluate(data, test["features"], test["target"],
                             data_name, train_range=train_range, test_range=test_range,
                             event_start=event_start, event_end=event_end, 
-                            train_flag= train_range, #epochs=epochs,
-                            predict_flag= True, plotstep=plotstep, scaler=scaler)
-        
+                            train_flag= train_range, #epochs=epochs, predict_flag= True, 
+                            plotstep=plotstep, scaler=scaler)
 # LATER, get this to choose train/not train in CLI
 else:
     event_start, event_end = event_range[0], event_range[1]

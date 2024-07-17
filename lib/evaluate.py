@@ -100,7 +100,9 @@ def evaluate(csv, saveto, columns, target, data_name, event_start, event_end, ep
 
                 # Saving Validation Loss to CSV
                 validation_loss_df = pd.DataFrame(validation_loss_list, columns=['Validation Loss', 'BL', 'FL', 'Model Name'])
-                csv_path = rf"{saveto}/model_results/{data_name}\{model_name}\{model_name}_{data_name}_validation.csv"
+                csv_path = rf"{saveto}/{data_name}\{model_name}\{model_name}_{data_name}_validation.csv"
+                # Create the directory if it doesn't exist (added 7/17)
+                os.makedirs(os.path.dirname(csv_path), exist_ok=True)
                 validation_loss_df.to_csv(csv_path, index=False)
             else:
                 # If already trained, get model & predict
@@ -117,4 +119,4 @@ def _predict(saveto, tstart, tend, model_name, testX, testY, test_dates, data_na
     print(f"predicting {model_name} over {event_range}")
 
     predicts = predict.predict(model_name, testX, saveto, data_name)
-    predict.plot_predicts(saveto, model_name, predicts, testY, test_dates, data_name, scaler=scaler ,event_range= event_range, event_plotstep= plotstep)
+    predict.plot_predicts(saveto, model_name, predicts, testY, test_dates, data_name, scaler=True, event_range= event_range, event_plotstep= plotstep)
