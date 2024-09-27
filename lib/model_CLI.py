@@ -2,11 +2,11 @@ import os, sys, argparse, re
 import evaluate, ingest
 
 from keras import mixed_precision
-policy = mixed_precision.Policy('mixed_float16')
+#policy = mixed_precision.Policy('mixed_float16')
 
-mixed_precision.set_global_policy(
+'''mixed_precision.set_global_policy(
     policy
-)
+)'''
 
 """
 =============================================================================
@@ -39,16 +39,16 @@ parser = argparse.ArgumentParser(description=
 \nCLI tool for House & Sison (2024) Hysteretic Stream Forecasting Model\n
 =============================================================================""")
 
-parser.add_argument("-data", type=str, required= True,
+parser.add_argument("-data", type=str, required= False,
                     help="The data (csv) to use including the path to folder and extension. See docs for more information about format.")
 
-parser.add_argument("-saveto", type=str, required= True,
+parser.add_argument("-saveto", type=str, required= False,
                     help="The file path to use for saving model and output. See docs for more information about format.")
 
-parser.add_argument("-model", type=str, required= True,
+parser.add_argument("-model", type=str, required= False,
                     help="Supply the name of the model to be ran. See docs for definitions and types. 'all' for all models.")
 
-parser.add_argument("-train", choices= ['y', 'n'], type=str, required= True,
+parser.add_argument("-train", choices= ['y', 'n'], type=str, required= False,
                     help="'y' if need to train a new model. 'n', dataname will be used to load a model.")
 
 parser.add_argument("-train_test_ratio", type= int, required=False, help= "Int range 0-1. Ratio of train to test set size. ie .80 == .8 train and .2 test.")
@@ -73,6 +73,13 @@ parser.add_argument("-train_range", type=str, required= False,
 parser.add_argument("-test_range", type=str, required= False,
                     help="Supply test date ranges: ex \"['1/1/2017 0:00','12/31/2021 23:45']\". If not testing, test_range will be set to event_range for plotting purposes.  ")
 
+
+parser.add_argument("-event_range", type=str, required= False,
+                    help="A start and end date for an event to be used for prediction. ex: [2022-03-18 00:00:00', '2022-04-07 00:00:00'] ")
+
+#parser.add_argument("-plotstep", type=str, choices=["Day", "Month"],required= False,
+#                    help= "Time step for plot ticks. Default: Month")
+
 parser.add_argument("-n_past", type=str, required= False,
                     help="Supply number of timesteps used in each prediction. Only required if training.")
 
@@ -81,17 +88,11 @@ parser.add_argument("-n_future", type=str, required= False,
 
 parser.add_argument("-epochs", type=int, required= False,
                     help="Number of epochs to train on ")
-
-parser.add_argument("-event_range", type=str, required= True,
-                    help="A start and end date for an event to be used for prediction. ex: [2022-03-18 00:00:00', '2022-04-07 00:00:00'] ")
-
-parser.add_argument("-plotstep", type=str, choices=["Day", "Month"],required= False,
-                    help= "Time step for plot ticks. Default: Month")
-
+                    
 parser.add_argument("-vp", type=str, choices=['y', 'n'], required= False,
-                    help="#### Inherent Integration #### \n DEPRECATED: Variable Predictions: 'y' if want predictions from each model in model sequence, 'n' if only WL is required.")
+                    help="#### Inherent Integration #### \n DEPRECATED: Vari able Predictions: 'y' if want predictions from each model in model sequence, 'n' if only WL is required.")
 
-parser.add_argument("-dn", type=str, required= True,
+parser.add_argument("-dn", type=str, required= False,
                     help="Supply the name you want for the run.")
 
 parser.add_argument("-scaler", type=str, choices=['y', 'n'], required= False,
@@ -100,31 +101,43 @@ parser.add_argument("-scaler", type=str, choices=['y', 'n'], required= False,
 parser.add_argument("-debug", action="store_true")
 
 
-args = parser.parse_args()
-
 # =============================================================================
 # Configure the run with command-line arguments
 # =============================================================================
-
+"""
 # assign and test the arguments
-data = args.data
-saveto = args.saveto
-model_names = args.model
-train = args.train
-train_test_ratio = args.train_test_ratio
-train_range = args.train_range
-n_past = args.n_past
-n_future = args.n_future
-test_range = args.test_range
-event_range = args.event_range
-epochs = args.epochs
+data = "C:\\Users\\Mikey\\Documents\\Github\\Hysterisis-ML-Modeling\\data\\Henry_4vars_2017_2023.csv"# args.data
+saveto = "C:\\Users\\Mikey\\Documents\\Github\\Hysteresis-ML-Modeling\\model_results"#args.saveto
+model_names = "all"#args.model
+train = "y"#args.train
+#train_test_ratio = args.train_test_ratio
+train_range = "['1/1/2017 0:00','12/31/2021 23:45']"#args.train_range
+n_past = 4#args.n_past
+n_future = 24#args.n_future
+test_range = "['1/1/2022 0:00','12/31/2022 23:45']"#args.test_range
+event_range = "['3/18/2022 0:00','4/7/2022 23:45']"#args.event_range
+#epochs = args.epochs
 #vp = args.vp -- Inherent Integration
-plotstep = args.plotstep 
-dataname = args.dn
-scaler = args.scaler
-debug = args.debug
+#plotstep = args.plotstep 
+dataname = "TEST829BL_1hr_FL_12hr"#args.dn
+#scaler = args.scaler
+#debug = args.debug
 
 
+##### Moved this from above "configure"
+# Add a print statement to show raw arguments
+print("Raw arguments:", sys.argv)"""
+
+# Parse the arguments
+#args, _ = parser.parse_known_args()
+
+# This one keeps throwing an error idk
+args = parser.parse_args()
+
+# Add a print statement to show parsed arguments
+print("Parsed arguments:", args)
+
+######
 # debug activation
 if debug:
     print('''
@@ -161,7 +174,7 @@ if data == None:
     print("\nSupply data with the -data command line argument")
     sys.exit()
 elif not os.path.exists(data):
-    print("\nThe csv doesn't exist, check the path, name, and file type")
+    print("\nThe data csv doesn't exist, check the path, name, and file type")
     sys.exit()
 
 # exit if there was no saveto path supplied or the path doesn't exist

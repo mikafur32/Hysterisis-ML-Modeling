@@ -10,13 +10,13 @@ import matplotlib.dates as mdates
 import os
 import numpy as np
 
-def predict(model_name, testX, dataname):
+def predict(model_name, testX, saveto, dataname):
     model = models_cuda.get_model(model_name, dataname)
     print("predicting")
     return pd.DataFrame(model.predict(testX, verbose= 1))
 
-def plot_predicts(model_name, predicts, testY, test_dates, dataname, scaler=True, event_range= None, event_plotstep= "Day"):
-
+def plot_predicts(saveto, model_name, predicts, testY, test_dates, dataname, scaler=True, event_range= None, event_plotstep= "Day"):
+# Removed scaler=True with just scaler 7/16, undid 7/17
     testY= testY.flatten()
     predicts = predicts.to_numpy().flatten()
 
@@ -33,7 +33,8 @@ def plot_predicts(model_name, predicts, testY, test_dates, dataname, scaler=True
     # Get the smallest shape
     shape = test_dates.shape[0] if predicts.shape[0] > test_dates.shape[0] else predicts.shape[0]
 
-    testY = pd.DataFrame(testY, index= pd.to_datetime(test_dates[:shape]))
+    testY.index = pd.to_datetime(test_dates[:shape])
+    #testY = pd.DataFrame(testY, index= pd.to_datetime(test_dates[:shape]))
 
     # Ensure uniform types
     predicts = predicts.astype(np.float64)
@@ -48,8 +49,11 @@ def plot_predicts(model_name, predicts, testY, test_dates, dataname, scaler=True
     testY[0]= testY[0].apply(lambda x: x - datum)
     '''
     # Export predicts
-    if(not os.path.exists(f"lib/model_results/{dataname}/{model_name}/predict_results")):
+    if(not os.path.exists(f"{saveto}/{dataname}/{model_name}/predict_results")):
         os.makedirs(f"lib/model_results/{dataname}/{model_name}/predict_results", exist_ok= True) 
+    # old, pre-saveto 
+    #if(not os.path.exists(f"lib/model_results/{dataname}/{model_name}/predict_results")):
+    #    os.makedirs(f"lib/model_results/{dataname}/{model_name}/predict_results", exist_ok= True) 
 
     # Set datetime indicies
     predicts["datetime"] = test_dates[:shape].index

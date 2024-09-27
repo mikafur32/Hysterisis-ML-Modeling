@@ -7,14 +7,15 @@ import matplotlib.dates as mdates
 
 def read_in(csv, target, renames={}):
 
-    df = pd.read_csv(csv, low_memory=False, dtype= {"0": str, 
-                                                    "1":np.float32,
-                                                    "2":np.float32,
-                                                    "3":np.float32})
+    df = pd.read_csv(csv, low_memory=False)
     df = df.rename(columns= renames)
-    #print("+++++++++++++++++++++++++++++++++++++++++++++++++\n")
-    #print("ingest 1", df.head()) 
-
+    
+    '''
+    ", dtype= {"0": str, 
+                                                        "1":np.float32,
+                                                        "2":np.float32,
+                                                        "3":np.float32})"
+    '''
     # So much work for a oneliner HAHA
     # Reorganizes columns to be "datetime", target, feature values (renames) 
     df =  df[['datetime'] + [target] + list(filter(lambda x: x!=target, list(renames.values())))] if( target in list(renames.values())) else df[['datetime'] +[target] + list(renames.values())]
@@ -59,15 +60,19 @@ def ingest(csv, target, n_past=96, n_future=12, renames={}, train_range= None, t
 
 
     # If no range is assigned, will use the full range for training & testing
-    if(train_range == None or test_range == None):
-        train_range, test_range = [all_dates[0], all_dates[-1]], [all_dates[0], all_dates[-1]]
-    elif(train_test_ratio):
+
+    train_range, test_range = [all_dates[0], all_dates[-1]], [all_dates[0], all_dates[-1]]
+    
+    """elif(train_test_ratio):
         train_range  = [all_dates[0], all_dates.iloc[int(np.floor(len(all_dates) * train_test_ratio))]]
         test_range   = [all_dates.iloc[int(np.ceil(len(all_dates) * train_test_ratio))], all_dates[-1]]
-   
+   """
     #print("+++++++++++++++++++++++++++++++++++++++++++++++++\n")
     #print("pre-scale", df.head())
 
+
+
+    ###### IF ADD VARIABLES ADD HERE ######
     if scaler:
         scaler_WL = StandardScaler()
         scaler_Q = StandardScaler()

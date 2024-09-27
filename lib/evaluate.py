@@ -11,7 +11,6 @@ from keras import mixed_precision
 
 from datetime import datetime
 
-
 '''
 
 TODO: memory management!!! 
@@ -45,11 +44,11 @@ if gpus:
 """
 
 
-policy = mixed_precision.Policy('mixed_float16')
+#policy = mixed_precision.Policy('mixed_float16')
 
-mixed_precision.set_global_policy(
-    policy
-)
+#mixed_precision.set_global_policy(
+#    policy
+#)
 
 def evaluate(csv, saveto, columns, target, data_name, event_start, event_end, epochs= 1, train_test_ratio= .8, train_range= None, test_range= None, n_past= 96, n_future= 12, train_flag= True, plotstep= "Month", scaler= True):
 
@@ -61,8 +60,7 @@ def evaluate(csv, saveto, columns, target, data_name, event_start, event_end, ep
     else:
         train_scaled, test_scaled, train_dates, test_dates, all_dates, scaler = ingest.ingest(csv, target, renames= columns, train_range= train_range, test_range= test_range)#train_test_ratio= 0.8)
     
-    #print("+++++++++++++++++++++++++++++++++++++++++++++++++\n")
-    #print("train_scaled", train_scaled[:5])
+
 
     trainX, trainY = ingest.reshape(train_scaled, n_past, n_future)#, timestep_type= "hr")
     testX, testY = ingest.reshape(test_scaled,  n_past, n_future)#, timestep_type= "hr")
@@ -108,8 +106,6 @@ def evaluate(csv, saveto, columns, target, data_name, event_start, event_end, ep
                 # If already trained, get model & predict
                 model = models_cuda.get_model(model_name, saveto=saveto, data=data_name)
                 _predict(saveto, event_start, event_end, model_name, testX, testY, test_dates, data_name, plotstep=plotstep, scaler= scaler)
-
-
 
 
 # MAYBE HERE needs to be edited to keep the scaled OBS values for the metrics calc
